@@ -89,7 +89,7 @@ const ContactMethods = () => {
             </p>
 
             <Link
-              href="mailto:hello@nibletech.com"
+              href="mailto:nibletechnology@gmail.com"
               className="mt-2 inline-block text-sm font-semibold text-primary hover:underline"
             >
               Send Email →

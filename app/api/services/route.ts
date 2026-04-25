@@ -1,4 +1,4 @@
-import { getServices } from "@/app/(admin)/content/manage-services/data";
+import { getServices } from "@/app/(admin)/admin/content/manage-services/data";
 import { ServicesPage } from "@/lib/types";
 
 export async function GET(request: Request) {

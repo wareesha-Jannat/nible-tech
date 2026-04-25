@@ -3,7 +3,7 @@ import React from "react";
 
 const OurApproach = () => {
   return (
-    <section className="relative w-full border-l border-r border-gray-200 py-24 px-8 text-foreground border-t bg-background overflow-hidden">
+    <section className="relative w-full border-l border-r border-gray-200 py-18 md:py-24 px-2 md:px-8 text-foreground border-t bg-background overflow-hidden">
       {/* 
         Background ambient glow: 
         Made much brighter and expanded to two crossing orbs (Purple & Blue) for a premium highly-noticeable gradient
@@ -26,7 +26,7 @@ const OurApproach = () => {
         {/* Stats Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-8 w-full mb-16 ">
           {/* Stat 1 */}
-          <GlassCard className="items-center justify-center">
+          <GlassCard className="items-center justify-center p-6">
             {/* Icon and Title Wrapper */}
             <div className="flex flex-col sm:flex-row sm:items-center space-y-3 sm:space-y-0 sm:space-x-4 mb-5 z-10 border-b  border-primary/20 group-hover:border-primary/40  transition-colors duration-500 pb-3">
               {/* Icon Box */}
@@ -45,7 +45,7 @@ const OurApproach = () => {
               want to solve.
             </p>
           </GlassCard>
-          <GlassCard className="items-center justify-center">
+          <GlassCard className="items-center justify-center px-6 md:px-8">
             {/* Icon and Title Wrapper */}
             <div className="flex flex-col sm:flex-row sm:items-center space-y-3 sm:space-y-0 sm:space-x-4 mb-5 z-10 border-b  border-primary/20 group-hover:border-primary/40  transition-colors duration-500 pb-3 ">
               {/* Icon Box */}
@@ -64,7 +64,7 @@ const OurApproach = () => {
               scalability and performance.
             </p>
           </GlassCard>
-          <GlassCard className="items-center justify-center">
+          <GlassCard className="items-center justify-center px-6 md:px-8">
             {/* Icon and Title Wrapper */}
             <div className="flex flex-col sm:flex-row sm:items-center space-y-3 sm:space-y-0 sm:space-x-4 mb-5 z-10 border-b  border-primary/20 group-hover:border-primary/40  transition-colors duration-500 pb-3 ">
               {/* Icon Box */}
@@ -83,7 +83,7 @@ const OurApproach = () => {
               clean code and user experience.
             </p>
           </GlassCard>
-          <GlassCard className="items-center justify-center">
+          <GlassCard className="items-center justify-center px-6 md:px-8">
             {/* Icon and Title Wrapper */}
             <div className="flex flex-col sm:flex-row sm:items-center space-y-3 sm:space-y-0 sm:space-x-4 mb-5 z-10 border-b  border-primary/20 group-hover:border-primary/40  transition-colors duration-500 pb-3 ">
               {/* Icon Box */}

@@ -4,12 +4,12 @@ const WhoWeAre = () => {
   return (
     <section
       id="learn-more"
-      className="relative w-full border-l border-r border-t border-gray-200 py-24 overflow-hidden"
+      className="relative w-full border-l border-r border-t border-gray-200 py-18 md:py-24 overflow-hidden"
     >
       {/* Subtle Glow */}
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[300px] bg-primary/8 rounded-full blur-[100px] -z-10" />
 
-      <div className="w-full max-w-[1000px] mx-auto px-6 flex flex-col items-center text-center relative z-10">
+      <div className=" px-6 flex flex-col items-center text-center relative z-10">
         <h2 className="text-3xl md:text-4xl lg:text-5xl font-extrabold mb-8 leading-tight">
           Who We{" "}
           <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary to-primary-dark">

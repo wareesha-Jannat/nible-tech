@@ -4,18 +4,20 @@ import { TestimonialsPage } from "@/lib/types";
 type UseTestimonialsProps = {
   initialData?: TestimonialsPage;
   search?: string;
+  featuredOnly?: boolean;
 };
 
 export function useTestimonials({
   initialData,
   search = "",
+  featuredOnly,
 }: UseTestimonialsProps) {
   return useInfiniteQuery({
-    queryKey: ["testimonials", search],
+    queryKey: ["testimonials", search, featuredOnly],
 
     queryFn: async ({ pageParam }): Promise<TestimonialsPage> => {
       const res = await fetch(
-        `/api/testimonials?cursor=${pageParam ?? ""}&limit=5&search=${search ?? ""}`,
+        `/api/testimonials?cursor=${pageParam ?? ""}&limit=5&search=${search ?? ""}&featured=${featuredOnly ?? false}`,
       );
 
       if (!res.ok) {

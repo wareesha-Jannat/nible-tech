@@ -2,21 +2,22 @@ import { useInfiniteQuery } from "@tanstack/react-query";
 import { FaqItem, FaqsPage } from "@/lib/types";
 
 type UseFaqsProps = {
-  initialData?: {
-    faqs: FaqItem[];
-    nextCursor: string | null;
-    featureCount: number;
-  };
+  initialData?: FaqsPage;
   search?: string;
+  featuredOnly?: boolean;
 };
 
-export function useFaqs({ initialData, search = "" }: UseFaqsProps) {
+export function useFaqs({
+  initialData,
+  search = "",
+  featuredOnly,
+}: UseFaqsProps) {
   return useInfiniteQuery({
-    queryKey: ["faqs", search],
+    queryKey: ["faqs", search, featuredOnly],
 
     queryFn: async ({ pageParam }): Promise<FaqsPage> => {
       const res = await fetch(
-        `/api/faqs?cursor=${pageParam ?? ""}&limit=10&search=${search ?? ""}`,
+        `/api/faqs?cursor=${pageParam ?? ""}&limit=10&search=${search ?? ""}&featured=${featuredOnly ?? false}`,
       );
 
       if (!res.ok) {

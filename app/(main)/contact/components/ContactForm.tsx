@@ -5,14 +5,35 @@ import GlassCard from "@/app/components/GlassCard";
 import Image from "next/image";
 import QueryForm from "@/app/components/QueryForm";
 import { ContactFormType } from "@/lib/validations/contact";
+import toast from "react-hot-toast";
+import { createQuery } from "./action";
 
 const ContactForm = () => {
-  const onSubmit = (data: ContactFormType) => {
-    console.log("Form Data:", data);
+  const handleSubmit = async (data: ContactFormType): Promise<boolean> => {
+    try {
+      const res = await createQuery(data);
+
+      if (res.success) {
+        toast.success("Message sent successfully 🚀");
+        return true;
+      } else {
+        toast.error(res.message || "Failed to send");
+        return false;
+      }
+    } catch (error: unknown) {
+      console.error("createQuery error:", error);
+
+      const message =
+        error instanceof Error ? error.message : "Something went wrong";
+
+      toast.error(message);
+
+      return false;
+    }
   };
 
   return (
-    <section className="relative w-full py-28 px-6 md:px-12 border border-border overflow-hidden">
+    <section className="relative w-full py-18 sm:py-28 px-6 md:px-12 border border-border overflow-hidden">
       <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
         {/* LEFT */}
         <div className="space-y-6 hidden lg:inline-block">
@@ -34,9 +55,14 @@ const ContactForm = () => {
         </div>
 
         {/* RIGHT */}
-        <GlassCard hasHoverGlow>
-          <QueryForm onSubmit={onSubmit} submitText="Send Message 🚀" />
-        </GlassCard>
+        <div className="space-y-7">
+          <h2 className="text-2xl lg:hidden font-bold text-primary-dark">
+            Start Your Project
+          </h2>
+          <GlassCard hasHoverGlow>
+            <QueryForm onSubmit={handleSubmit} submitText="Send Message 🚀" />
+          </GlassCard>
+        </div>
       </div>
     </section>
   );

@@ -8,14 +8,20 @@ import {
   ResetPasswordInput,
 } from "@/lib/validations/resetPassword";
 import { Eye, EyeOff } from "lucide-react";
+import { useSearchParams } from "next/navigation";
+import toast from "react-hot-toast";
+import { ChangePassword } from "./action";
 
 const ResetPassword = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
+  const searchParams = useSearchParams();
+  const token = searchParams.get("token") ?? "";
 
   const {
     register,
     handleSubmit,
+    reset,
     formState: { errors, isSubmitting },
   } = useForm<ResetPasswordInput>({
     resolver: zodResolver(resetPasswordSchema),
@@ -23,6 +29,18 @@ const ResetPassword = () => {
 
   const onSubmit = async (data: ResetPasswordInput) => {
     console.log("Reset Password:", data);
+    try {
+      const result = await ChangePassword({ data, token });
+      if (result.error) {
+        toast.error(result.error);
+      } else {
+        toast.success("password saved successfully");
+        reset();
+      }
+    } catch (error) {
+      console.log(error)
+      toast.error("something went wrong");
+    }
   };
 
   return (

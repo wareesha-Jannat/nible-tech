@@ -7,11 +7,14 @@ import {
   forgotPasswordSchema,
   ForgotPasswordInput,
 } from "@/lib/validations/forgotPassword";
+import toast from "react-hot-toast";
+import { ResetPasswordLink } from "./action";
 
 const ForgotPassword = () => {
   const {
     register,
     handleSubmit,
+    reset,
     formState: { errors, isSubmitting },
   } = useForm<ForgotPasswordInput>({
     resolver: zodResolver(forgotPasswordSchema),
@@ -20,8 +23,18 @@ const ForgotPassword = () => {
   const onSubmit = async (data: ForgotPasswordInput) => {
     console.log("Send reset link to:", data.email);
 
-    // 👉 later:
-    // call API → send email via nodemailer
+    try {
+      const result = await ResetPasswordLink(data);
+      if (result.error) {
+        toast.error(result.error);
+      } else {
+        toast.success("Password Reset link sent successfully");
+        reset();
+      }
+    } catch (error) {
+      console.log(error)
+      toast.error("something went wrong");
+    }
   };
 
   return (

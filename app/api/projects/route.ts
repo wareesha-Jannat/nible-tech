@@ -1,4 +1,4 @@
-import { getProjects } from "@/app/(admin)/content/manage-projects/data";
+import { getProjects } from "@/app/(admin)/admin/content/manage-projects/data";
 import { ProjectsPage } from "@/lib/types";
 
 export async function GET(request: Request) {
@@ -8,11 +8,12 @@ export async function GET(request: Request) {
     const cursor = searchParams.get("cursor");
     const limit = parseInt(searchParams.get("limit") || "5");
     const search = searchParams.get("search") || "";
-
+    const featured = searchParams.get("featured") === "true";
     const result = await getProjects({
       cursor,
       limit,
       search,
+      featured,
     });
 
     if (!result.success) {

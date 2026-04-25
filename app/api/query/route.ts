@@ -2,6 +2,26 @@ import { connectDB } from "@/lib/db";
 import { Query } from "@/models/Query";
 import mongoose from "mongoose";
 
+type MongoTextQuery = {
+  $regex: string;
+  $options?: "i";
+};
+
+type MongoIdQuery = {
+  $lt?: mongoose.Types.ObjectId;
+};
+
+type FilterQuery = {
+  _id?: MongoIdQuery;
+  status?: string;
+  $or?: Array<{
+    name?: MongoTextQuery;
+    email?: MongoTextQuery;
+    projectType?: MongoTextQuery;
+    message?: MongoTextQuery;
+  }>;
+};
+
 export async function GET(req: Request) {
   try {
     await connectDB();
@@ -13,7 +33,7 @@ export async function GET(req: Request) {
     const status = searchParams.get("status");
     const search = searchParams.get("search");
 
-    const query: any = {};
+    const query: FilterQuery = {};
 
     // pagination (cursor-based)
     if (cursor) {

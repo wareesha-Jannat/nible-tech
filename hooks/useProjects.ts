@@ -4,15 +4,20 @@ import { ProjectsPage } from "@/lib/types";
 type UseProjectsProps = {
   initialData?: ProjectsPage;
   search?: string;
+  featuredOnly?: boolean;
 };
 
-export function useProjects({ initialData, search = "" }: UseProjectsProps) {
+export function useProjects({
+  initialData,
+  search = "",
+  featuredOnly,
+}: UseProjectsProps) {
   return useInfiniteQuery({
-    queryKey: ["projects", search],
+    queryKey: ["projects", search, featuredOnly],
 
     queryFn: async ({ pageParam }): Promise<ProjectsPage> => {
       const res = await fetch(
-        `/api/projects?cursor=${pageParam ?? ""}&limit=5&search=${search ?? ""}`,
+        `/api/projects?cursor=${pageParam ?? ""}&limit=5&search=${search ?? ""}&featured=${featuredOnly ?? false}`,
       );
 
       if (!res.ok) {

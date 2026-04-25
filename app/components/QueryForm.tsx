@@ -3,12 +3,12 @@
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { ContactFormType, contactSchema } from "@/lib/validations/contact";
-import { services } from "@/app/utils/dummyData";
 import { Loader2 } from "lucide-react";
+import { useFeaturedServices } from "@/hooks/useFeaturedServices";
 
 type Props = {
   defaultValues?: ContactFormType;
-  onSubmit: (data: ContactFormType) => void;
+  onSubmit: (data: ContactFormType) => Promise<boolean>;
   submitText?: string;
   className?: string; // 🔥 for border customization
 };
@@ -22,11 +22,14 @@ const QueryForm = ({
   const {
     register,
     handleSubmit,
+    reset,
     formState: { errors, isSubmitting },
   } = useForm<ContactFormType>({
     resolver: zodResolver(contactSchema),
     defaultValues,
   });
+
+  const { data: services, isLoading } = useFeaturedServices();
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key !== "Enter") return;
@@ -52,9 +55,17 @@ const QueryForm = ({
     if (next) next.focus();
   };
 
+  const handleFormSubmit = async (data: ContactFormType) => {
+    const success = await onSubmit(data);
+
+    if (success && !defaultValues) {
+      reset(); // only reset for CREATE mode
+    }
+  };
+
   return (
     <form
-      onSubmit={handleSubmit(onSubmit)}
+      onSubmit={handleSubmit(handleFormSubmit)}
       className={`space-y-4 rounded-xl ${className}`}
     >
       {/* Name */}
@@ -119,8 +130,10 @@ const QueryForm = ({
           {...register("projectType")}
         >
           <option value="">Select a service</option>
-          {services.map((service) => (
-            <option key={service.id} value={service.title}>
+          {isLoading && <option disabled>Loading services...</option>}
+
+          {services?.map((service) => (
+            <option key={service._id} value={service.title}>
               {service.title}
             </option>
           ))}

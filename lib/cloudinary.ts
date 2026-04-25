@@ -1,4 +1,4 @@
-
+import { UploadApiResponse } from "cloudinary";
 import { v2 as cloudinary } from "cloudinary";
 
 cloudinary.config({
@@ -8,12 +8,12 @@ cloudinary.config({
 });
 export default cloudinary;
 
- type DeleteResult = {
+type DeleteResult = {
   success: boolean;
   error?: string;
 };
 
- type UploadResult = {
+type UploadResult = {
   url: string;
   public_id: string;
 };
@@ -27,7 +27,7 @@ export const uploadToCloudinary = async (
     const bytes = await file.arrayBuffer();
     const buffer = Buffer.from(bytes);
 
-    const result: any = await new Promise((resolve, reject) => {
+    const result = await new Promise<UploadApiResponse>((resolve, reject) => {
       const uploadStream = cloudinary.uploader.upload_stream(
         {
           folder: `nibleTech/${folder}`,
@@ -37,10 +37,14 @@ export const uploadToCloudinary = async (
         },
         (error, result) => {
           if (error) return reject(error);
+          if (!result)
+            return reject(new Error("Cloudinary returned empty result"));
+
           resolve(result);
         },
       );
 
+      // ✅ THIS WAS MISSING (critical)
       uploadStream.end(buffer);
     });
 
@@ -48,13 +52,17 @@ export const uploadToCloudinary = async (
       url: result.secure_url,
       public_id: result.public_id,
     };
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Cloudinary Upload Error:", error);
 
-    throw new Error(error?.message || "Failed to upload image to Cloudinary");
+    const message =
+      error instanceof Error
+        ? error.message
+        : "Failed to upload image to Cloudinary";
+
+    throw new Error(message);
   }
 };
-
 export const deleteFromCloudinary = async (
   publicId: string,
 ): Promise<DeleteResult> => {
@@ -79,12 +87,15 @@ export const deleteFromCloudinary = async (
     return {
       success: true,
     };
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Cloudinary Delete Error:", error);
+
+    const message =
+      error instanceof Error ? error.message : "Cloudinary delete failed";
 
     return {
       success: false,
-      error: error?.message || "Cloudinary delete failed",
+      error: message,
     };
   }
 };

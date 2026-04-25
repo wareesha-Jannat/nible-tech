@@ -1,4 +1,4 @@
-import { getTestimonials } from "@/app/(admin)/content/manage-testimonials/data";
+import { getTestimonials } from "@/app/(admin)/admin/content/manage-testimonials/data";
 import { TestimonialsPage } from "@/lib/types";
 
 export async function GET(request: Request) {
@@ -8,11 +8,13 @@ export async function GET(request: Request) {
     const cursor = searchParams.get("cursor");
     const limit = parseInt(searchParams.get("limit") || "5");
     const search = searchParams.get("search") || "";
+    const featured = searchParams.get("featured") === "true";
 
     const result = await getTestimonials({
       cursor,
       limit,
       search,
+      featured,
     });
 
     if (!result.success) {

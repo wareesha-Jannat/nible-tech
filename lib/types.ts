@@ -6,7 +6,7 @@ export type ServiceItem = {
   features: string[];
   technologies: string[];
   featured: boolean;
-  priority: number;
+  priority?: number;
 };
 
 export type Stats = {
@@ -40,11 +40,12 @@ export type TestimonialItem = {
   name: string;
   role: string;
   message: string;
-  image: UserImage;
+  image: Image;
   featured: boolean;
   createdAt?: string;
+  priority?: number;
 };
-export type UserImage = {
+export type Image = {
   url: string;
   public_id: string;
 };
@@ -53,11 +54,12 @@ export type ProjectItem = {
   _id: string;
   title: string;
   description: string;
-  image: UserImage;
+  image: Image;
   features: string[];
   technologies: string[];
   featured: boolean;
   createdAt?: string;
+  priority?: number;
 };
 
 export type ServicesPage = {
@@ -89,6 +91,7 @@ export type FaqItem = {
   answer: string;
   featured: boolean;
   createdAt?: string;
+  priority?: number;
 };
 export type StatItem = {
   _id: string;
@@ -97,17 +100,25 @@ export type StatItem = {
   label: string;
 };
 
-export type User = {
+export type UserItem = {
   id: string;
   name: string;
   email: string;
-  image?: UserImage | null;
+  image?: Image;
   role: "SUPER_ADMIN";
-  createdAt: string; // ISO string
+  createdAt?: string; // ISO string
   updatedAt?: string;
 };
 
 export type ChartData = {
   name: string;
   queries: number;
+};
+
+export type SessionUser = {
+  id: string;
+  name: string;
+  email: string;
+  role: string;
+  image?: string | null;
 };

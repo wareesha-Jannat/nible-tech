@@ -15,10 +15,10 @@ const ContactHero = () => {
 
       {/* ✨ Floating Icons */}
       <div className="pointer-events-none absolute inset-0">
-        <MessageCircle className="absolute top-[20%] left-[10%] w-10 h-10 text-primary/30 animate-float" />
-        <Phone className="absolute top-[30%] right-[12%] w-8 h-8 text-primary/30 animate-float animation-delay-2000" />
-        <Mail className="absolute bottom-[25%] left-[15%] w-8 h-8 text-primary/30 animate-float animation-delay-4000" />
-        <Code className="absolute bottom-[20%] right-[18%] w-10 h-10 text-primary/30 animate-float animation-delay-3000" />
+        <MessageCircle className="absolute top-[15%] left-[8%] w-10 h-10 text-primary/30 animate-float" />
+        <Phone className="absolute top-[10%] right-[12%] w-8 h-8 text-primary/30 animate-float animation-delay-2000" />
+        <Mail className="absolute bottom-[50%] left-[25%] w-8 h-8 text-primary/30 animate-float animation-delay-4000" />
+        <Code className="absolute bottom-[40%] right-[18%] w-10 h-10 text-primary/30 animate-float animation-delay-3000" />
       </div>
 
       {/* 🧱 Content */}

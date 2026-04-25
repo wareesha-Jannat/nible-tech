@@ -3,22 +3,48 @@ import React from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useForm } from "react-hook-form";
-import { loginSchema, LoginInput } from "@/lib/validations/auth";
+import { loginSchema, LoginInput } from "@/lib/validations/login";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Eye, EyeOff } from "lucide-react";
+import { Eye, EyeOff, Loader2 } from "lucide-react";
+import { signIn } from "next-auth/react";
+import { useRouter } from "next/navigation";
+import toast from "react-hot-toast";
 
 const LoginPage = () => {
   const [showPassword, setShowPassword] = React.useState(false);
+
   const {
     register,
     handleSubmit,
-    formState: { errors },
+    reset,
+    formState: { errors, isSubmitting },
   } = useForm<LoginInput>({
     resolver: zodResolver(loginSchema),
   });
 
-  const onSubmit = (data: LoginInput) => {
-    console.log("Login data:", data);
+  const router = useRouter();
+
+  const onSubmit = async (data: LoginInput) => {
+    try {
+      const res = await signIn("credentials", {
+        email: data.email,
+        password: data.password,
+        redirect: false,
+      });
+      
+      if (res?.error) {
+        toast.error(res.code ?? "login failed");
+      } else {
+        toast.success("Login successful 🚀");
+        reset();
+        router.push("/admin/dashboard");
+      }
+    } catch (error: unknown) {
+      const message =
+        error instanceof Error ? error.message : "Something went wrong";
+
+      toast.error(message);
+    }
   };
 
   return (
@@ -111,27 +137,27 @@ const LoginPage = () => {
               )}
             </div>
 
-            {/* Remember */}
-            <div className="flex items-center justify-between text-sm">
-              <label className="flex items-center gap-2 cursor-pointer">
-                <input type="checkbox" {...register("remember")} />
-                Remember me
-              </label>
-
-              <Link
-                href="/forgot-password"
-                className="text-primary hover:underline"
-              >
-                Forgot password?
-              </Link>
-            </div>
+            <Link
+              href="/forgot-password"
+              className="text-primary hover:underline"
+            >
+              Forgot password?
+            </Link>
 
             {/* Submit */}
             <button
               type="submit"
-              className="w-full py-2.5 rounded-lg bg-primary text-white font-medium hover:opacity-90 transition"
+              disabled={isSubmitting}
+              className="bg-primary text-white px-4 py-2 rounded min-w-[110px] flex items-center justify-center gap-2"
             >
-              Sign In
+              {isSubmitting ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  Login
+                </>
+              ) : (
+                <span>Login</span>
+              )}
             </button>
           </form>
         </div>

@@ -50,28 +50,38 @@ export const formatDateTime = (dateString?: string) => {
 
 // lib/serialize.ts
 
-export function serializeData(data: any): any[] | any {
-  if (!data) return null;
+export function serializeData(data: unknown): unknown {
+  if (!data) return data;
 
-  // ✅ If array → map each item
   if (Array.isArray(data)) {
-    return data.map((item) => serializeData(item));
+    return data.map(serializeData);
   }
 
-  // ✅ Single object
-  const result = { ...data };
-
-  if (result._id) {
-    result._id = result._id.toString();
+  if (typeof data !== "object") {
+    return data;
   }
 
-  if (result.createdAt) {
-    result.createdAt = new Date(result.createdAt).toISOString();
+  const result = { ...(data as Record<string, unknown>) };
+
+  // _id
+  if (
+    typeof result._id === "object" &&
+    result._id !== null &&
+    "toString" in result._id
+  ) {
+    result._id = (result._id as { toString: () => string }).toString();
   }
 
-  if (result.updatedAt) {
-    result.updatedAt = new Date(result.updatedAt).toISOString();
+  // createdAt
+  if (result.createdAt instanceof Date) {
+    result.createdAt = result.createdAt.toISOString();
+  }
+
+  // updatedAt
+  if (result.updatedAt instanceof Date) {
+    result.updatedAt = result.updatedAt.toISOString();
   }
 
   return result;
 }
+
