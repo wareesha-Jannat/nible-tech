@@ -54,8 +54,8 @@ const AdminHeader = ({ user }: { user: SessionUser }) => {
         </Link>
 
         {/* Desktop Nav */}
-        <nav className="hidden md:flex items-center space-x-8">
-          <ul className="flex space-x-8 items-center text-sm font-medium">
+        <nav className="hidden min-[850px]:flex items-center space-x-5">
+          <ul className="flex space-x-5 items-center text-sm font-medium">
             {navLinks.map((link) => {
               const isActive = pathname === link.path;
               return (
@@ -83,7 +83,7 @@ const AdminHeader = ({ user }: { user: SessionUser }) => {
 
           {/* Admin Profile */}
           <div className="flex cursor-pointer group">
-            <Link href="/admin/profile" className="flex items-center gap-3">
+            <Link href="/admin/profile" className="flex items-center gap-2">
               {user?.image ? (
                 <Image
                   src={user.image}
@@ -114,7 +114,7 @@ const AdminHeader = ({ user }: { user: SessionUser }) => {
 
         {/* Mobile Toggle */}
         <button
-          className="md:hidden z-50 p-2"
+          className="min-[850px]:hidden z-50 p-2"
           onClick={() => setIsMenuOpen(!isMenuOpen)}
         >
           <div className="w-6 flex flex-col items-end gap-1.5">
@@ -139,7 +139,7 @@ const AdminHeader = ({ user }: { user: SessionUser }) => {
 
       {/* Mobile Menu */}
       <div
-        className={`md:hidden absolute top-full left-0 w-full bg-white border-b border-gray-200 shadow-xl transition-all duration-500 ${
+        className={`min-[850px]:hidden absolute top-full left-0 w-full bg-white border-b border-gray-200 shadow-xl transition-all duration-500 ${
           isMenuOpen ? "max-h-screen py-6" : "max-h-0 overflow-hidden"
         }`}
       >
@@ -151,7 +151,7 @@ const AdminHeader = ({ user }: { user: SessionUser }) => {
                 <Link
                   href={link.path}
                   onClick={() => setIsMenuOpen(false)}
-                  className={`flex items-center py-3 px-4 rounded-lg text-lg ${
+                  className={`flex items-center rounded-lg p-2 text-lg ${
                     isActive
                       ? "bg-primary/10 text-primary-dark"
                       : "text-primary"
@@ -163,37 +163,36 @@ const AdminHeader = ({ user }: { user: SessionUser }) => {
               </li>
             );
           })}
+          {/* Mobile Admin */}
+          <div className="flex cursor-pointer group">
+            <Link href="/admin/profile" className="flex items-center gap-3">
+              {user?.image ? (
+                <Image
+                  src={user.image}
+                  alt="User"
+                  width={36}
+                  height={36}
+                  className="w-9 h-9 rounded-full object-cover"
+                />
+              ) : (
+                <div className="w-9 h-9 rounded-full bg-primary/10 flex items-center justify-center">
+                  <User className="w-5 h-5 text-primary" />
+                </div>
+              )}
+
+              <span className="font-medium group-hover:text-primary-dark">
+                {user?.name || "Admin"}
+              </span>
+            </Link>
+          </div>
+          <button
+            onClick={handleLogout}
+            className="flex items-center gap-1 p-2 text-primary-light hover:text-primary-dark transition"
+          >
+            <LogOut className="w-5 h-5" />
+            Logout
+          </button>
         </ul>
-
-        {/* Mobile Admin */}
-        <div className="flex cursor-pointer group">
-          <Link href="/admin/profile" className="flex items-center gap-3">
-            {user?.image ? (
-              <Image
-                src={user.image}
-                alt="User"
-                width={36}
-                height={36}
-                className="w-9 h-9 rounded-full object-cover"
-              />
-            ) : (
-              <div className="w-9 h-9 rounded-full bg-primary/10 flex items-center justify-center">
-                <User className="w-5 h-5 text-primary" />
-              </div>
-            )}
-
-            <span className="font-medium group-hover:text-primary-dark">
-              {user?.name || "Admin"}
-            </span>
-          </Link>
-        </div>
-        <button
-          onClick={handleLogout}
-          className="flex items-center gap-2 text-primary-light hover:text-primary-dark transition"
-        >
-          <LogOut className="w-5 h-5" />
-          Logout
-        </button>
       </div>
     </header>
   );

@@ -3,7 +3,7 @@ import Link from 'next/link';
 
 const CtaSection = () => {
   return (
-    <section className="relative w-full border-l border-r border-gray-200 py-20 md:py-30 px-8 text-foreground border-t overflow-hidden">
+    <section className="relative w-full border-l border-r border-gray-200 py-20 md:py-30 px-4 sm:px-8 text-foreground border-t overflow-hidden">
 
       {/* Intense Center Glow for CTA focus */}
       <div className="absolute top-[50%] left-[50%] -translate-x-1/2 -translate-y-1/2 w-[800px] h-[400px] bg-primary/10 rounded-full blur-[120px] -z-10" />

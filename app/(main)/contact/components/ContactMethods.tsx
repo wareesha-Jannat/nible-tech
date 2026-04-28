@@ -28,7 +28,7 @@ const ContactMethods = () => {
         </div>
 
         {/* Cards */}
-        <div className="grid grid-cols-1  md:grid-cols-2 md:gap-12 gap-8 md:px-10 px-6 w-full">
+        <div className="grid grid-cols-1  md:grid-cols-3 md:gap-12 gap-8 md:px-10 px-6 w-full">
           {/* WhatsApp (highlighted) */}
           <GlassCard className="space-y-3" hasHoverGlow>
             <div className="w-14 h-14 flex items-center justify-center bg-green-500/10 rounded-xl border border-green-500/20 mb-3">
@@ -44,7 +44,7 @@ const ContactMethods = () => {
             </p>
 
             <Link
-              href="https://wa.me/923XXXXXXXXX"
+              href="https://wa.me/447453408589"
               target="_blank"
               className="mt-2 inline-block text-sm font-semibold text-green-600 hover:underline"
             >
@@ -67,7 +67,7 @@ const ContactMethods = () => {
             </p>
 
             <Link
-              href="tel:+923XXXXXXXXX"
+              href="tel:+447453408589"
               className="mt-2 inline-block text-sm font-semibold text-primary hover:underline"
             >
               Call Now →
@@ -93,28 +93,6 @@ const ContactMethods = () => {
               className="mt-2 inline-block text-sm font-semibold text-primary hover:underline"
             >
               Send Email →
-            </Link>
-          </GlassCard>
-
-          {/* Schedule */}
-          <GlassCard className="flex flex-col space-y-8 " hasHoverGlow>
-            <div className="w-14 h-14 flex items-center justify-center bg-primary/10 rounded-xl border border-primary/20 mb-3">
-              <Calendar size={26} className="text-primary-dark" />
-            </div>
-
-            <h3 className="text-xl font-semibold text-primary-dark mb-1">
-              Book a Call
-            </h3>
-
-            <p className="text-gray-600 text-sm">
-              Schedule a meeting at your convenience.
-            </p>
-
-            <Link
-              href="#schedule"
-              className="mt-2 inline-block text-sm font-semibold text-primary hover:underline"
-            >
-              Schedule →
             </Link>
           </GlassCard>
         </div>

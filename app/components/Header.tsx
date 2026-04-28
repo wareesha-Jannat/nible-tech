@@ -87,7 +87,7 @@ const Header = () => {
             {session ? (
               <Link
                 href="admin/dashboard"
-                className="bg-primary hover:bg-primary-dark hover:-translate-y-0.5 transition-all duration-300 py-2.5 px-6 rounded-lg font-semibold shadow-md active:scale-95 text-white"
+                className="bg-primary text-center hover:bg-primary-dark hover:-translate-y-0.5 transition-all duration-300 py-2.5 px-6 rounded-lg font-semibold shadow-md active:scale-95 text-white"
               >
                 Dashboard
               </Link>
@@ -135,7 +135,7 @@ const Header = () => {
 
       {/* Mobile Navigation Dropdown */}
       <div
-        className={`md:hidden absolute top-full left-0 w-full overflow-hidden transition-all duration-500 ease-in-out bg-white border-b border-gray-200 shadow-2xl ${
+        className={`lg:hidden absolute top-full left-0 w-full overflow-hidden transition-all duration-500 ease-in-out bg-white border-b border-gray-200 shadow-2xl ${
           isMenuOpen
             ? "max-h-screen opacity-100 py-6"
             : "max-h-0 opacity-0 py-0 border-none"
@@ -163,13 +163,21 @@ const Header = () => {
 
         <div className="px-6 pb-2 flex flex-col gap-3">
           {/* Login Button */}
-          <Link
-            href="/login"
-            className="w-full text-center border border-primary text-primary hover:bg-primary hover:text-white transition-all duration-300 py-3 rounded-lg font-semibold active:scale-95 text-lg"
-          >
-            Login
-          </Link>
-
+          {session ? (
+            <Link
+              href="admin/dashboard"
+              className="bg-primary hover:bg-primary-dark text-center hover:-translate-y-0.5 transition-all duration-300 py-2.5 px-6 rounded-lg font-semibold shadow-md active:scale-95 text-white"
+            >
+              Dashboard
+            </Link>
+          ) : (
+            <Link
+              href="/login"
+              className="border border-primary text-primary hover:bg-primary hover:text-white hover:-translate-y-0.5 transition-all duration-300 py-2.5 px-6 rounded-lg font-semibold active:scale-95"
+            >
+              Login
+            </Link>
+          )}
           {/* Contact Button */}
           <Link
             href="/contact"

@@ -5,7 +5,7 @@ import RecentQueriesSkeleton from "./RecentQueriesSkeleton";
 
 const RecentQueriesSection = () => {
   return (
-    <section className="w-full flex flex-col py-14 px-10 md:px-14 border border-border ">
+    <section className="w-full flex flex-col py-14 px-6 md:px-14 border border-border ">
       {/* Header */}
       <div className="flex flex-wrap items-center gap-4 mb-6">
         <h2 className="text-3xl font-bold text-primary-dark">Recent Queries</h2>

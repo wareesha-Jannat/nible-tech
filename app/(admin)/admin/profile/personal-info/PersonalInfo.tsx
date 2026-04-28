@@ -58,7 +58,7 @@ const PersonalInfo = ({ user }: PersonalInfoProps) => {
         deleteImage: isDeleted,
         existingPublicId: user.image?.public_id,
       });
-     
+
       setIsSaving(false);
       if (data.success) {
         toast.success("Profile updated successfully");
@@ -91,7 +91,7 @@ const PersonalInfo = ({ user }: PersonalInfoProps) => {
         />
 
         {/* User Meta Info */}
-        <div className="w-full grid grid-cols-1 sm:grid-cols-3 gap-6 text-sm">
+        <div className="w-full grid grid-cols-1 sm:grid-cols-3 gap-3 text-sm">
           {/* Role */}
           <div className="flex flex-col items-center bg-gray-50 rounded-xl py-4">
             <span className="text-xs text-primary-light">Role</span>
@@ -150,21 +150,20 @@ const PersonalInfo = ({ user }: PersonalInfoProps) => {
           </div>
         </div>
 
-        {/* Save Button */}
-        <div className="w-full flex items-center justify-center gap-2">
+        <div className="w-full flex flex-col min-[470px]:flex-row items-center justify-center gap-2">
           <button
             type="button"
             onClick={handleDeleteImage}
             disabled={!hasImage}
-            className="px-6 py-2 bg-red-600 active:bg-red-700 transition-colors duration-200 text-white rounded-md disabled:opacity-30"
+            className="w-full px-6 py-2 bg-red-600 active:bg-red-700 transition-colors duration-200 text-white rounded-md disabled:opacity-30"
           >
             Remove Image
           </button>
+
           <button
             onClick={handleSave}
             disabled={!isChanged || isSaving}
-            className="px-6 py-2 w-fit bg-primary-dark active:bg-primary-dark transition-colors duration-200
-             text-white rounded-md disabled:opacity-30"
+            className="w-full px-6 py-2 bg-primary-dark active:bg-primary-dark transition-colors duration-200 text-white rounded-md disabled:opacity-30 flex items-center justify-center gap-2 whitespace-nowrap"
           >
             {isSaving ? (
               <>

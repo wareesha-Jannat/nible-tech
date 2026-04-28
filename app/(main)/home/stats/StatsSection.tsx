@@ -13,9 +13,9 @@ const StatsSection = () => {
       <div className="absolute top-[80%] right-[30%] translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-indigo-600/20 rounded-full blur-[140px] -z-10" />
 
       {/* Container */}
-      <div className="w-full px-6 flex flex-col items-center">
+      <div className="w-full px-4 sm:px-6 flex flex-col items-center">
         {/* Title */}
-        <h2 className="text-3xl md:text-4xl font-extrabold mb-18 text-center text-primary-dark">
+        <h2 className="text-2xl md:text-4xl font-extrabold mb-18 text-center text-primary-dark">
           Trusted by Innovative Startups
         </h2>
         <Suspense fallback={<StatsSkeleton />}>
