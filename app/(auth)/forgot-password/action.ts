@@ -33,7 +33,7 @@ export async function ResetPasswordLink(data: ForgotPasswordInput) {
 
     const expiresAt = new Date(Date.now() + 15 * 60 * 1000);
 
-    const resetLink = `${process.env.NEXT_PUBLIC_BASE_URL}/reset-password?token=${token}`;
+    const resetLink = `${process.env.NEXTAUTH_URL}/reset-password?token=${token}`;
 
     await PasswordResetToken.create({
       email,
