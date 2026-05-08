@@ -12,7 +12,7 @@ export async function sendResetPasswordEmail({
   resetLink,
 }: SendResetPasswordEmailParams) {
   return await resend.emails.send({
-    from: "NibbleTech <hello@mail.nibbletech.com>",
+    from: "NibbleTech <hello@mail.nibletech.com>",
     to: email,
     subject: "Reset your Password",
     html: `
