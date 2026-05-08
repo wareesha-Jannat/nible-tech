@@ -12,7 +12,7 @@ type GetUserDataResponse = {
 export async function getUserData(id: string): Promise<GetUserDataResponse> {
   try {
     await connectDB();
-
+    console.log(id);
     const user = await User.findById(id).select("-password").lean();
 
     if (!user) {

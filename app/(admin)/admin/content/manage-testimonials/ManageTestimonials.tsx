@@ -1,20 +1,19 @@
 "use client";
 
 import React, { useState } from "react";
-import { TestimonialItem, TestimonialsPage } from "@/lib/types";
+import { TestimonialItem } from "@/lib/types";
 import TestimonialDrawer from "./TestimonialDrawer";
 import Image from "next/image";
 import { ChevronDown, Loader2 } from "lucide-react";
 
 import { TestimonialFormType } from "@/lib/validations/testimonials";
-import { useDebounce } from "@/hooks/useDebounce";
+
+import toast from "react-hot-toast";
 import {
-  useAddTestimonialMutation,
-  useDeleteTestimonialMutation,
-  useUpdateTestimonialMutation,
-  useUpdateTestimonialPriorityMutation,
-} from "./mutations";
-import { useTestimonials } from "@/hooks/useTestimonials";
+  addTestimonial,
+  deleteTestimonialDB,
+  updateTestimonial
+} from "./action";
 
 export type TestimonialDrawerResponse = {
   data: TestimonialFormType;
@@ -25,45 +24,16 @@ export type TestimonialDrawerResponse = {
 
 type ManageTestimonialsProps = {
   initialTestimonials: TestimonialItem[];
-  cursor: string | null;
-  featureCount: number;
 };
 
 const ManageTestimonials = ({
   initialTestimonials,
-  cursor,
-  featureCount,
 }: ManageTestimonialsProps) => {
+  const [testimonials, setTestimonials] =
+    useState<TestimonialItem[]>(initialTestimonials);
   const [selected, setSelected] = useState<TestimonialItem | null>(null);
   const [isCreating, setIsCreating] = useState(false);
-  const [showFeaturedOnly, setShowFeaturedOnly] = useState(false);
-  const [search, setSearch] = useState("");
-  const debouncedSearch = useDebounce(search, 400);
-
-  // ----------------------------
-  // Queries
-  // ----------------------------
-  const isSearching = debouncedSearch.length > 0;
-  const initialData = {
-    testimonials: initialTestimonials,
-    nextCursor: cursor,
-    featureCount,
-    featuredOnly: showFeaturedOnly,
-  };
-  const { data, fetchNextPage, hasNextPage, isFetchingNextPage } =
-    useTestimonials({
-      initialData: isSearching || showFeaturedOnly ? undefined : initialData,
-      search: debouncedSearch,
-    });
-  const testimonials =
-    data?.pages.flatMap((page: TestimonialsPage) => page.testimonials) ?? [];
-
-  const featuredCount = data?.pages[0]?.featureCount ?? 0;
-
-  const addMutation = useAddTestimonialMutation();
-  const updateMutation = useUpdateTestimonialMutation();
-  const deleteMutation = useDeleteTestimonialMutation();
-  const priorityMutation = useUpdateTestimonialPriorityMutation();
+  const [loadingId, setLoadingId] = useState<string | null>(null);
 
   const openCreate = () => {
     setSelected(null);
@@ -80,45 +50,73 @@ const ManageTestimonials = ({
     setIsCreating(false);
   };
 
+  // SAVE
+  // ----------------------------
   const saveTestimonial = async (payload: TestimonialDrawerResponse) => {
-    if (isCreating) {
-      await addMutation.mutateAsync(payload, {
-        onSuccess: () => {
-          closeDrawer();
-        },
-      });
-    } else {
-      await updateMutation.mutateAsync(payload, {
-        onSuccess: () => {
-          closeDrawer();
-        },
-      });
+    try {
+      if (isCreating) {
+        const res = await addTestimonial({
+          restData: payload.data,
+          imageFile: payload.imageFile,
+        });
+
+        if (!res.success) throw new Error(res.message);
+
+        setTestimonials((prev) => [res.newTestimonial, ...prev]);
+
+        toast.success("Testimonial added successfully");
+      } else {
+        if (!payload._id) {
+          toast.error("No testimonial selected");
+          return;
+        }
+
+        const res = await updateTestimonial({
+          id: payload._id,
+          restData: payload.data,
+          imageFile: payload.imageFile,
+          removeImage: payload.removeImage,
+        });
+
+        if (!res.success) throw new Error(res.message);
+
+        setTestimonials((prev) =>
+          prev.map((t) => (t._id === payload._id ? res.updated : t)),
+        );
+
+        toast.success("Testimonial updated successfully");
+      }
+
+      closeDrawer();
+    } catch (err) {
+      console.error(err);
+      toast.error(err instanceof Error ? err.message : "Something went wrong");
     }
   };
 
   // ----------------------------
   // DELETE
   // ----------------------------
-  const deleteTestimonial = (id: string) => {
-    deleteMutation.mutate(id);
+  const deleteTestimonial = async (id: string) => {
+    if (loadingId) return;
+
+    try {
+      setLoadingId(id);
+
+      const res = await deleteTestimonialDB(id);
+
+      if (!res.success) throw new Error(res.message);
+
+      setTestimonials((prev) => prev.filter((t) => t._id !== id));
+
+      toast.success("Testimonial deleted");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Error deleting");
+    } finally {
+      setLoadingId(null);
+    }
   };
 
-  // ----------------------------
-  // Load more
-  // ----------------------------
-  const loadMore = () => {
-    if (!hasNextPage || isFetchingNextPage) return;
-    fetchNextPage();
-  };
-
-  const changePriority = (id: string, value: number) => {
-    if (value < 0) return;
-
-    priorityMutation.mutate({
-      id,
-      priority: value,
-    });
-  };
 
   return (
     <>
@@ -135,39 +133,9 @@ const ManageTestimonials = ({
 
         <button
           onClick={openCreate}
-          disabled={addMutation.isPending}
-          className="px-4 w-full sm:w-auto ml-auto py-2 bg-primary text-white rounded-md flex items-center justify-center gap-2 disabled:opacity-50"
+          className="px-4 ml-auto py-2 bg-primary text-white rounded-md"
         >
-          {addMutation.isPending ? (
-            <>
-              <Loader2 className="w-4 h-4 animate-spin" />
-              Adding...
-            </>
-          ) : (
-            "+ Add Testimonial"
-          )}
-        </button>
-      </div>
-
-      {/* Search */}
-      <div className="mb-4 flex gap-2">
-        <input
-          type="text"
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          placeholder="Search services..."
-          className="flex-1 px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
-        />
-
-        <button
-          onClick={() => setShowFeaturedOnly((prev) => !prev)}
-          className={`px-4 py-2 rounded-md text-sm font-medium border transition ${
-            showFeaturedOnly
-              ? "bg-primary text-white border-primary"
-              : "bg-white text-gray-600 border-gray-300"
-          }`}
-        >
-          {showFeaturedOnly ? "All Services" : "Featured"}
+          + Add Testimonial
         </button>
       </div>
 
@@ -175,8 +143,8 @@ const ManageTestimonials = ({
       <div className="space-y-3">
         {testimonials && testimonials.length > 0 ? (
           testimonials.map((t) => {
-            const isDeleting =
-              deleteMutation.isPending && deleteMutation.variables === t._id;
+            const isDeleting = loadingId === t._id;
+
             return (
               <details
                 key={t._id}
@@ -197,21 +165,22 @@ const ManageTestimonials = ({
 
                     {/* Info */}
                     <div>
-                      <h3 className="font-semibold text-primary-dark text-sm">
-                        {t.name}
-                      </h3>
-                      <p className="text-xs text-gray-400">{t.role}</p>
+                      <h3 className="font-semibold text-sm">{t.name}</h3>
+
+                      <p className="text-xs text-gray-400">
+                        {t.role}
+                        {t.company && (
+                          <>
+                            <span className="mx-1">•</span>
+                            {t.company}
+                          </>
+                        )}
+                      </p>
                     </div>
                   </div>
 
                   {/* Actions */}
                   <div className="flex items-center ml-auto gap-2">
-                    {t.featured && (
-                      <span className="text-xs px-2 py-1 bg-green-100 text-green-600 rounded-full">
-                        Featured
-                      </span>
-                    )}
-
                     <button
                       onClick={(e) => {
                         e.preventDefault();
@@ -255,28 +224,6 @@ const ManageTestimonials = ({
                     </p>
                   </div>
                 </div>
-                 {t.featured && (
-                    <div className="flex items-center justify-between mb-4 p-3 bg-gray-50 rounded-md">
-                      {/* Priority Display */}
-                      <div className="text-sm">
-                        <span className="text-gray-500 mr-2">Priority:</span>
-                        <span className="font-semibold">
-                          {t.priority ?? 0}
-                        </span>
-                      </div>
-
-                      {/* Controls */}
-                      <input
-                        type="number"
-                        defaultValue={t.priority ?? 0}
-                        min={0}
-                        onBlur={(e) =>
-                          changePriority(t._id, Number(e.target.value))
-                        }
-                        className="w-20 px-2 py-1 border rounded text-sm focus:outline-none focus:ring-1 focus:ring-primary"
-                      />
-                    </div>
-                  )}
               </details>
             );
           })
@@ -284,22 +231,6 @@ const ManageTestimonials = ({
           <div className="text-center text-gray-500 py-10">
             No testimonial found
           </div>
-        )}
-        {hasNextPage && (
-          <button
-            onClick={loadMore}
-            disabled={isFetchingNextPage}
-            className="mt-6 px-4 py-2 border rounded-md disabled:opacity-50 flex items-center justify-center gap-2"
-          >
-            {isFetchingNextPage ? (
-              <>
-                <Loader2 className="w-4 h-4 animate-spin" />
-                Loading...
-              </>
-            ) : (
-              "Load More"
-            )}
-          </button>
         )}
       </div>
 
@@ -309,7 +240,6 @@ const ManageTestimonials = ({
           testimonial={selected}
           onClose={closeDrawer}
           onSave={saveTestimonial}
-          featuredCount={featuredCount}
         />
       )}
     </>

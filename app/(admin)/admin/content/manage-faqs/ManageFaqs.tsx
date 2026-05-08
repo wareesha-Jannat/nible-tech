@@ -2,74 +2,49 @@
 
 import React, { useEffect, useState } from "react";
 import { ChevronDown, Loader2 } from "lucide-react";
-
-import { useDebounce } from "@/hooks/useDebounce";
-import { useFaqs } from "@/hooks/useFaqs";
-
-import {
-  useAddFaqMutation,
-  useUpdateFaqMutation,
-  useDeleteFaqMutation,
-  useUpdateFaqPriorityMutation,
-} from "./mutations";
+import toast from "react-hot-toast";
 
 import FaqDrawer from "./FaqDrawer";
 import { FaqItem } from "@/lib/types";
 
+import { addFaq, updateFaq, deleteFaqDB, updateFaqPriority } from "./action";
+import { FAQFormType } from "@/lib/validations/faq";
+
 type ManageFaqsProps = {
   initialFaqs: FaqItem[];
-  cursor: string | null;
-  featureCount: number;
 };
 
-const ManageFaqs = ({ initialFaqs, cursor, featureCount }: ManageFaqsProps) => {
+const ManageFaqs = ({ initialFaqs }: ManageFaqsProps) => {
+  // STATE
+
+  const [faqs, setFaqs] = useState<FaqItem[]>(initialFaqs);
+
   const [selectedFaq, setSelectedFaq] = useState<FaqItem | null>(null);
   const [isCreating, setIsCreating] = useState(false);
-  const [search, setSearch] = useState("");
-  const [showFeaturedOnly, setShowFeaturedOnly] = useState(false);
-  const debouncedSearch = useDebounce(search, 400);
 
-  // -----------------------------
-  // Query
-  // -----------------------------
-  const isSearching = debouncedSearch.length > 0;
+  const [loadingId, setLoadingId] = useState<string | null>(null);
 
-  const initialData = {
-    faqs: initialFaqs,
-    nextCursor: cursor,
-    featureCount,
+  // -------------------------
+  // DRAWER
+  // -------------------------
+  const openEdit = (faq: FaqItem) => {
+    setSelectedFaq(faq);
+    setIsCreating(false);
   };
 
-  const { data, fetchNextPage, hasNextPage, isFetchingNextPage } = useFaqs({
-    initialData: isSearching || showFeaturedOnly ? undefined : initialData,
-    search: debouncedSearch,
-    featuredOnly: showFeaturedOnly,
-  });
-
-  const faqs = data?.pages.flatMap((p) => p.faqs) ?? [];
-  const featuredCount = data?.pages[0]?.featureCount ?? 0;
-
-  // -----------------------------
-  // Mutations
-  // -----------------------------
-  const addMutation = useAddFaqMutation();
-  const updateMutation = useUpdateFaqMutation();
-  const deleteMutation = useDeleteFaqMutation();
-  const priorityMutation = useUpdateFaqPriorityMutation();
-  // -----------------------------
-  // Load more
-  // -----------------------------
-  const loadMore = () => {
-    if (!hasNextPage || isFetchingNextPage) return;
-    fetchNextPage();
+  const openCreate = () => {
+    setSelectedFaq(null);
+    setIsCreating(true);
   };
+
   const closeDrawer = () => {
     setSelectedFaq(null);
     setIsCreating(false);
   };
-  // -----------------------------
+
+  // -------------------------
   // ESC + scroll lock
-  // -----------------------------
+  // -------------------------
   useEffect(() => {
     const handleEsc = (e: KeyboardEvent) => {
       if (e.key === "Escape") closeDrawer();
@@ -85,59 +60,86 @@ const ManageFaqs = ({ initialFaqs, cursor, featureCount }: ManageFaqsProps) => {
     };
   }, [selectedFaq, isCreating]);
 
-  // -----------------------------
-  // Drawer handlers
-  // -----------------------------
-  const openEdit = (faq: FaqItem) => {
-    setSelectedFaq(faq);
-    setIsCreating(false);
-  };
+  // -------------------------
+  // SAVE (ADD / UPDATE)
+  // -------------------------
+  const saveFaq = async (data: FAQFormType) => {
+  
 
-  const openCreate = () => {
-    setSelectedFaq(null);
-    setIsCreating(true);
-  };
+    try {
+      if (isCreating) {
+        const res = await addFaq(data);
 
-  // -----------------------------
-  // Save (Add / Update)
-  // -----------------------------
-  const saveFaq = async (data: FaqItem) => {
-    const { _id, ...rest } = data;
+        if (!res.success) throw new Error(res.message);
 
-    if (isCreating) {
-      await addMutation.mutateAsync(rest, {
-        onSuccess: closeDrawer,
-      });
-    } else {
-      await updateMutation.mutateAsync(
-        { _id, data: rest },
-        { onSuccess: closeDrawer },
-      );
+        setFaqs((prev) => [res.newFaq, ...prev]);
+        toast.success("FAQ added");
+      } else {
+        if (!selectedFaq) return;
+
+        const res = await updateFaq(selectedFaq._id, data);
+
+        if (!res.success) throw new Error(res.message);
+
+        setFaqs((prev) =>
+          prev.map((f) => (f._id === selectedFaq._id ? res.updated : f)),
+        );
+
+        toast.success("FAQ updated");
+      }
+
+      closeDrawer();
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : "Something went wrong");
     }
   };
 
-  // -----------------------------
-  // Delete
-  // -----------------------------
-  const deleteFaq = (id: string) => {
-    deleteMutation.mutate(id);
+  // -------------------------
+  // DELETE
+  // -------------------------
+  const deleteFaq = async (id: string) => {
+    try {
+      setLoadingId(id);
+
+      const res = await deleteFaqDB(id);
+
+      if (!res.success) throw new Error(res.message);
+
+      setFaqs((prev) => prev.filter((f) => f._id !== id));
+
+      toast.success("FAQ deleted");
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : "Something went wrong");
+    } finally {
+      setLoadingId(null);
+    }
   };
 
-  const changePriority = (id: string, value: number) => {
-    if (value < 0) return;
+  // -------------------------
+  // PRIORITY
+  // -------------------------
+  const changePriority = async (id: string, value: number) => {
+    try {
+      if (value < 0) return;
 
-    priorityMutation.mutate({
-      id,
-      priority: value,
-    });
+      const res = await updateFaqPriority(id, value);
+
+      if (!res.success) throw new Error(res.message);
+
+      setFaqs((prev) => prev.map((f) => (f._id === id ? res.updated : f)));
+
+      toast.success("Priority updated");
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : "Failed to update");
+    }
   };
 
-  // -----------------------------
+  // -------------------------
   // UI
-  // -----------------------------
+  // -------------------------
   return (
     <>
-      {/* Header */}
+      {/* HEADER */}
       <div className="flex flex-wrap items-center gap-4 mb-8">
         <div>
           <h2 className="text-2xl sm:text-3xl font-bold text-primary-dark">
@@ -154,62 +156,31 @@ const ManageFaqs = ({ initialFaqs, cursor, featureCount }: ManageFaqsProps) => {
         </button>
       </div>
 
-      {/* Search */}
-      <div className="mb-4 flex gap-2">
-        <input
-          type="text"
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          placeholder="Search services..."
-          className="flex-1 px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
-        />
-
-        <button
-          onClick={() => setShowFeaturedOnly((prev) => !prev)}
-          className={`px-4 py-2 rounded-md text-sm font-medium border transition ${
-            showFeaturedOnly
-              ? "bg-primary text-white border-primary"
-              : "bg-white text-gray-600 border-gray-300"
-          }`}
-        >
-          {showFeaturedOnly ? "All Faqs" : "Featured"}
-        </button>
-      </div>
-
-      {/* List */}
-      <div className="bg-white rounded-2xl border border-border">
+      {/* LIST */}
+      <div className="bg-white rounded-2xl border-border p-4 sm:p-6 ">
         {faqs.length > 0 ? (
           faqs.map((faq, index) => {
-            const isDeleting =
-              deleteMutation.isPending && deleteMutation.variables === faq._id;
+            const isDeleting = loadingId === faq._id;
 
             return (
               <details
                 key={faq._id}
-                className="group border-b border-border last:border-none"
+                className="border-b last:border-none group"
               >
-                <summary className="flex flex-wrap gap-3 px-4 sm:px-6 py-4 cursor-pointer list-none">
-                  <div className="flex items-center gap-3">
-                    <span className="text-sm text-muted font-medium">
-                      {index + 1}.
-                    </span>
+                <summary className="flex flex-wrap gap-3 px-4 sm:px-6 py-4 cursor-pointer">
+                  <div className="flex text-sm gap-3">
+                    <span>{index + 1}.</span>
                     <h3 className="font-semibold">{faq.question}</h3>
                   </div>
 
-                  <div className="ml-auto flex items-center gap-2">
-                    {faq.featured && (
-                      <span className="text-xs px-2 py-1 bg-green-100 text-green-600 rounded-full">
-                        Featured
-                      </span>
-                    )}
-
+                  <div className="flex items-center ml-auto gap-2">
                     <button
                       onClick={(e) => {
                         e.preventDefault();
                         e.stopPropagation();
                         openEdit(faq);
                       }}
-                      className="px-3 py-1 text-xs border rounded-md"
+                      className="px-3 py-1 text-sm border rounded"
                     >
                       Edit
                     </button>
@@ -221,7 +192,7 @@ const ManageFaqs = ({ initialFaqs, cursor, featureCount }: ManageFaqsProps) => {
                         deleteFaq(faq._id);
                       }}
                       disabled={isDeleting}
-                      className="px-3 py-1 text-xs border text-red-500 rounded-md"
+                      className="px-3 py-1 border text-sm text-red-500"
                     >
                       {isDeleting ? (
                         <Loader2 className="w-4 h-4 animate-spin" />
@@ -230,67 +201,36 @@ const ManageFaqs = ({ initialFaqs, cursor, featureCount }: ManageFaqsProps) => {
                       )}
                     </button>
 
-                    <ChevronDown className="w-4 h-4 text-gray-400 group-open:rotate-180 transition-transform" />
+                    <ChevronDown className="w-4 h-4 group-open:rotate-180 transition" />
                   </div>
                 </summary>
 
-                <div className="px-6 pb-4 pt-2 border-t bg-gray-50">
-                  <p className="text-sm text-gray-600">{faq.answer}</p>
-                </div>
-                {faq.featured && (
-                  <div className="flex items-center justify-between mb-4 p-3 bg-gray-50 rounded-md">
-                    {/* Priority Display */}
-                    <div className="text-sm">
-                      <span className="text-gray-500 mr-2">Priority:</span>
-                      <span className="font-semibold">{faq.priority ?? 0}</span>
-                    </div>
+                <div className="px-4 pb-4 text-sm text-gray-600">
+                  {faq.answer}
 
-                    {/* Controls */}
+                  <div className="mt-3 flex items-center gap-2">
+                    <span>Priority:</span>
                     <input
                       type="number"
                       defaultValue={faq.priority ?? 0}
-                      min={0}
                       onBlur={(e) =>
                         changePriority(faq._id, Number(e.target.value))
                       }
-                      className="w-20 px-2 py-1 border rounded text-sm focus:outline-none focus:ring-1 focus:ring-primary"
+                      className="border px-2 py-1 w-20"
                     />
                   </div>
-                )}
+                </div>
               </details>
             );
           })
         ) : (
-          <p className="text-center text-gray-500 py-10">No FAQs found</p>
-        )}
-
-        {/* Load More */}
-        {hasNextPage && (
-          <button
-            onClick={loadMore}
-            disabled={isFetchingNextPage}
-            className="mt-6 px-4 py-2 border rounded-md flex items-center gap-2"
-          >
-            {isFetchingNextPage ? (
-              <>
-                <Loader2 className="w-4 h-4 animate-spin" />
-                Loading...
-              </>
-            ) : (
-              "Load More"
-            )}
-          </button>
+          <p className="text-center py-10 text-gray-500">No FAQs found</p>
         )}
       </div>
 
-      {/* Drawer */}
+      {/* DRAWER */}
       {(selectedFaq || isCreating) && (
-        <FaqDrawer
-          faq={selectedFaq}
-          onClose={closeDrawer}
-          onSave={saveFaq}
-          featuredCount={featuredCount}
-        />
+        <FaqDrawer faq={selectedFaq} onClose={closeDrawer} onSave={saveFaq} />
       )}
     </>
   );

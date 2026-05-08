@@ -3,25 +3,25 @@
 import React, { useEffect } from "react";
 import { useForm, useFieldArray } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import {
-  serviceFormSchema,
-  ServiceFormType,
-} from "@/lib/validations/service";
+import { serviceFormSchema, ServiceFormType } from "@/lib/validations/service";
 import { ServiceItem } from "@/lib/types";
 import { Loader2, X } from "lucide-react";
 
 type Props = {
   service: ServiceItem | null;
   onClose: () => void;
-  onSave: (data: ServiceItem) => void;
-  featuredCount: number;
+
+  // IMPORTANT: now accepts DB-ready ServiceItem
+  onSave: (data: ServiceFormType) => void;
 };
 
-const MAX_FEATURED = 6;
-const MAX_FEATURES = 4;
-const MAX_TECH = 6;
+const MAX_FEATURES = 6;
+const MAX_TECH = 10;
 
-const ServiceDrawer = ({ service, onClose, onSave, featuredCount }: Props) => {
+const ServiceDrawer = ({ service, onClose, onSave }: Props) => {
+  // ----------------------------
+  // FORM
+  // ----------------------------
   const {
     register,
     control,
@@ -32,31 +32,23 @@ const ServiceDrawer = ({ service, onClose, onSave, featuredCount }: Props) => {
     defaultValues: service
       ? {
           ...service,
-          features: service.features.map((f) =>
-            typeof f === "string" ? { value: f } : f,
-          ),
-          technologies: service.technologies.map((t) =>
-            typeof t === "string" ? { value: t } : t,
-          ),
+          features: service.features.map((f) => f),
+          technologies: service.technologies.map((t) => ({ value: t })),
         }
       : {
           title: "",
-          description: "",
-          category: "development",
+          shortDescription: "",
+          overview: "",
+          category: "seo",
+          order: 0,
           features: [],
           technologies: [],
-          featured: false,
         },
   });
 
-  // 🔥 live calculated count (no stale props)
-
-  const wasOriginallyFeatured = service?.featured ?? false;
-
-  const isFeaturedDisabled =
-    featuredCount >= MAX_FEATURED && !wasOriginallyFeatured;
-
+  // ----------------------------
   // FEATURES FIELD ARRAY
+  // ----------------------------
   const {
     fields: featureFields,
     append: addFeature,
@@ -66,7 +58,9 @@ const ServiceDrawer = ({ service, onClose, onSave, featuredCount }: Props) => {
     name: "features",
   });
 
+  // ----------------------------
   // TECHNOLOGIES FIELD ARRAY
+  // ----------------------------
   const {
     fields: techFields,
     append: addTech,
@@ -76,7 +70,9 @@ const ServiceDrawer = ({ service, onClose, onSave, featuredCount }: Props) => {
     name: "technologies",
   });
 
-  // ESC disable scroll
+  // ----------------------------
+  // ESC LOCK
+  // ----------------------------
   useEffect(() => {
     document.body.style.overflow = "hidden";
     return () => {
@@ -84,39 +80,16 @@ const ServiceDrawer = ({ service, onClose, onSave, featuredCount }: Props) => {
     };
   }, []);
 
+  // ----------------------------
+  // SUBMIT
+  // ----------------------------
   const onSubmit = async (data: ServiceFormType) => {
-   
-    const cleanedFeatures = data.features
-      .map((f) => f.value.trim())
-      .filter(Boolean);
-
-    const cleanedTech = data.technologies
-      .map((t) => t.value.trim())
-      .filter(Boolean);
-
-    const finalData: ServiceItem = {
-      ...service,
-      ...data,
-      _id: service?._id || "",
-      features: cleanedFeatures,
-      technologies: cleanedTech,
-      featured: data.featured,
-    };
-    
-    await onSave(finalData);
+    await onSave(data);
   };
 
-  // ENTER KEY HANDLER (features)
-  const handleFeatureKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === "Enter") {
-      e.preventDefault();
-      const value = (e.target as HTMLInputElement).value.trim();
-      if (!value || featureFields.length >= MAX_FEATURES) return;
-
-      addFeature({ value: "" });
-    }
-  };
-
+  // ----------------------------
+  // UI HANDLERS
+  // ----------------------------
   const handleTechKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === "Enter") {
       e.preventDefault();
@@ -127,14 +100,17 @@ const ServiceDrawer = ({ service, onClose, onSave, featuredCount }: Props) => {
     }
   };
 
+  // ----------------------------
+  // UI
+  // ----------------------------
   return (
     <>
       {/* overlay */}
-      <div onClick={onClose} className="fixed inset-0  bg-black/40 z-40" />
+      <div onClick={onClose} className="fixed inset-0 bg-black/40 z-40" />
 
       {/* drawer */}
-      <div className="fixed right-0 top-0 p-6  h-full w-full md:w-[450px] bg-white z-50 shadow-xl">
-        <div className=" border border-primary-dark flex flex-col rounded-sm h-full">
+      <div className="fixed right-0 top-0 p-6 h-full w-full md:w-[450px] bg-white z-50 shadow-xl">
+        <div className="border border-primary-dark flex flex-col rounded-sm h-full">
           {/* HEADER */}
           <div className="flex justify-between items-center p-5 border-b">
             <h2 className="text-lg font-semibold">
@@ -150,16 +126,16 @@ const ServiceDrawer = ({ service, onClose, onSave, featuredCount }: Props) => {
             onSubmit={handleSubmit(onSubmit)}
             className="flex flex-col overflow-y-auto"
           >
-            {/* BODY */}
-            <div className="flex-1 p-5 space-y-6 ">
+            <div className="flex-1 p-5 space-y-6">
               {/* TITLE */}
               <div>
                 <label className="text-sm font-medium text-muted">
                   Title *
                 </label>
+
                 <input
                   {...register("title")}
-                  className="w-full mt-2 px-4 py-3 rounded-lg border border-gray-300 focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition"
+                  className="w-full mt-2 px-4 py-3 rounded-lg border"
                   placeholder="Enter service title"
                 />
                 {errors.title && (
@@ -167,44 +143,89 @@ const ServiceDrawer = ({ service, onClose, onSave, featuredCount }: Props) => {
                 )}
               </div>
 
-              {/* DESCRIPTION */}
+              {/* SHORT DESCRIPTION */}
               <div>
-                <label className="text-sm text-muted font-medium">
-                  Description
+                <label className="text-sm font-medium text-muted">
+                  Short Description
                 </label>
+
                 <textarea
-                  {...register("description")}
+                  {...register("shortDescription")}
+                  rows={2}
+                  className="w-full mt-2 px-4 py-3 rounded-lg border"
+                />
+              </div>
+
+              {/* OVERVIEW */}
+              <div>
+                <label className="text-sm font-medium text-muted">
+                  Overview
+                </label>
+
+                <textarea
+                  {...register("overview")}
                   rows={4}
-                  className="w-full mt-2 px-4 py-3 rounded-lg border border-gray-300 focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition"
-                  placeholder="Enter service description"
+                  className="w-full mt-2 px-4 py-3 rounded-lg border"
+                />
+              </div>
+
+              {/* CATEGORY */}
+              <div>
+                <label className="text-sm font-medium text-muted">
+                  Category
+                </label>
+
+                <select
+                  {...register("category")}
+                  className="w-full mt-2 px-4 py-3 rounded-lg border"
+                >
+                  <option value="seo">SEO</option>
+                  <option value="web">Web</option>
+                  <option value="marketing">Marketing</option>
+                </select>
+              </div>
+
+              {/* ORDER */}
+              <div>
+                <label className="text-sm font-medium text-muted">Order</label>
+
+                <input
+                  type="number"
+                  {...register("order", { valueAsNumber: true })}
+                  className="w-full mt-2 px-4 py-3 rounded-lg border"
                 />
               </div>
 
               {/* FEATURES */}
               <div>
-                <label className="text-sm text-muted font-medium">
-                  Features (max {MAX_FEATURES})
+                <label className="text-sm font-medium text-muted">
+                  Features
                 </label>
 
-                <div className="flex flex-wrap gap-2 mt-2">
+                <div className="space-y-3 mt-2">
                   {featureFields.map((field, index) => (
                     <div
                       key={field.id}
-                      className="flex items-center bg-gray-100 px-3 py-1 rounded-full"
+                      className="border rounded-lg p-3 space-y-2"
                     >
                       <input
-                        {...register(`features.${index}.value` as const)}
-                        onKeyDown={handleFeatureKeyDown}
-                        className="bg-transparent outline-none text-sm min-w-[120px]"
-                        placeholder="Feature"
+                        {...register(`features.${index}.title`)}
+                        placeholder="Feature title"
+                        className="w-full px-3 py-2 border rounded"
+                      />
+
+                      <textarea
+                        {...register(`features.${index}.description`)}
+                        placeholder="Feature description"
+                        className="w-full px-3 py-2 border rounded"
                       />
 
                       <button
                         type="button"
                         onClick={() => removeFeature(index)}
-                        className="ml-2 text-red-500"
+                        className="text-red-500 text-sm"
                       >
-                        <X size={14} />
+                        Remove
                       </button>
                     </div>
                   ))}
@@ -212,18 +233,18 @@ const ServiceDrawer = ({ service, onClose, onSave, featuredCount }: Props) => {
                   <button
                     type="button"
                     disabled={featureFields.length >= MAX_FEATURES}
-                    onClick={() => addFeature({ value: "" })}
-                    className="text-sm text-primary"
+                    onClick={() => addFeature({ title: "", description: "" })}
+                    className="text-primary text-sm"
                   >
-                    + Add
+                    + Add Feature
                   </button>
                 </div>
               </div>
 
               {/* TECHNOLOGIES */}
               <div>
-                <label className="text-sm text-muted font-medium">
-                  Technologies (max {MAX_TECH})
+                <label className="text-sm font-medium text-muted">
+                  Technologies
                 </label>
 
                 <div className="flex flex-wrap gap-2 mt-2">
@@ -233,10 +254,9 @@ const ServiceDrawer = ({ service, onClose, onSave, featuredCount }: Props) => {
                       className="flex items-center bg-gray-100 px-3 py-1 rounded-full"
                     >
                       <input
-                        {...register(`technologies.${index}.value` as const)}
+                        {...register(`technologies.${index}.value`)}
                         onKeyDown={handleTechKeyDown}
                         className="bg-transparent outline-none text-sm w-[120px]"
-                        placeholder="Tech"
                       />
 
                       <button
@@ -251,7 +271,6 @@ const ServiceDrawer = ({ service, onClose, onSave, featuredCount }: Props) => {
 
                   <button
                     type="button"
-                    disabled={techFields.length >= MAX_TECH}
                     onClick={() => addTech({ value: "" })}
                     className="text-sm text-primary"
                   >
@@ -259,33 +278,14 @@ const ServiceDrawer = ({ service, onClose, onSave, featuredCount }: Props) => {
                   </button>
                 </div>
               </div>
-
-              {/* FEATURED */}
-              <div className="flex items-center justify-between">
-                <label className="text-sm text-muted font-medium">
-                  Featured Service
-                </label>
-
-                <input
-                  type="checkbox"
-                  {...register("featured")}
-                  disabled={isFeaturedDisabled}
-                />
-              </div>
-
-              {isFeaturedDisabled && (
-                <p className="text-xs text-red-500">
-                  Maximum {MAX_FEATURED} featured services allowed
-                </p>
-              )}
             </div>
 
             {/* FOOTER */}
-            <div className="p-5 flex justify-end gap-3 ">
+            <div className="p-5 flex justify-end gap-3">
               <button
                 type="button"
-                className="px-3 py-1 text-sm border border-primary text-primary rounded hover:bg-primary hover:text-white"
                 onClick={onClose}
+                className="px-3 py-1 border rounded"
               >
                 Cancel
               </button>
@@ -293,15 +293,14 @@ const ServiceDrawer = ({ service, onClose, onSave, featuredCount }: Props) => {
               <button
                 type="submit"
                 disabled={isSubmitting}
-                className="bg-primary text-white px-4 py-2 rounded min-w-[110px] flex items-center justify-center gap-2"
+                className="bg-primary text-white px-4 py-2 rounded min-w-[110px]"
               >
                 {isSubmitting ? (
                   <>
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                    <span>Saving...</span>
+                    <Loader2 className="w-4 h-4 animate-spin" /> Save
                   </>
                 ) : (
-                  <span>Save</span>
+                  "Save"
                 )}
               </button>
             </div>

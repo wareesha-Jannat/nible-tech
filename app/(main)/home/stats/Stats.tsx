@@ -6,7 +6,7 @@ import { StatItem } from "@/lib/types";
 // Custom lightweight animated counter component
 const Counter = ({
   end,
-  duration = 2000,
+  duration = 1000,
 }: {
   end: number;
   duration?: number;

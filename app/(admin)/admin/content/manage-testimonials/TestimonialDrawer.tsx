@@ -16,19 +16,11 @@ type Props = {
   testimonial: TestimonialItem | null;
   onClose: () => void;
   onSave: (data: TestimonialDrawerResponse) => void;
-  featuredCount: number;
 };
 
-const TestimonialDrawer = ({
-  testimonial,
-  onClose,
-  onSave,
-  featuredCount,
-}: Props) => {
+const TestimonialDrawer = ({ testimonial, onClose, onSave }: Props) => {
   const [croppedImage, setCroppedImage] = useState<File | null>(null);
   const [removeImage, setRemoveImage] = useState(false);
-
-  const MAX_FEATURED = 6;
 
   const {
     register,
@@ -39,8 +31,8 @@ const TestimonialDrawer = ({
     defaultValues: testimonial || {
       name: "",
       role: "",
+      company : "",
       message: "",
-      featured: false,
     },
   });
 
@@ -98,11 +90,6 @@ const TestimonialDrawer = ({
       ...(testimonial?._id && { _id: testimonial._id }),
     });
   };
-
-  const wasOriginallyFeatured = testimonial?.featured ?? false;
-
-  const isFeaturedDisabled =
-    featuredCount >= MAX_FEATURED && !wasOriginallyFeatured;
 
   return (
     <>
@@ -188,6 +175,25 @@ const TestimonialDrawer = ({
                   </p>
                 )}
               </div>
+              {/* Company */}
+              <div>
+                <label className="text-sm font-medium text-gray-600">
+                  Company *
+                </label>
+
+                <input
+                  {...register("company")}
+                  onKeyDown={handleKeyDown}
+                  className="w-full mt-2 px-4 py-3 border border-gray-300 rounded-lg outline-none"
+                  placeholder="Google, Microsoft, etc."
+                />
+
+                {errors.company && (
+                  <p className="text-xs text-red-500 mt-1">
+                    {errors.company.message}
+                  </p>
+                )}
+              </div>
 
               {/* Message */}
               <div>
@@ -207,24 +213,6 @@ const TestimonialDrawer = ({
                   </p>
                 )}
               </div>
-
-              {/* Featured */}
-              <div className="flex items-center justify-between">
-                <label className="text-sm font-medium text-gray-600">
-                  Featured
-                </label>
-
-                <input
-                  type="checkbox"
-                  {...register("featured")}
-                  disabled={isFeaturedDisabled}
-                />
-              </div>
-              {isFeaturedDisabled && (
-                <p className="text-xs text-red-500">
-                  Maximum {MAX_FEATURED} featured testimonials allowed
-                </p>
-              )}
             </div>
             {/* Footer */}
             <div className="shrink-0  p-5 flex justify-end gap-3 bg-white">

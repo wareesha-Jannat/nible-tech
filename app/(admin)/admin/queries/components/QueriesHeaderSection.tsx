@@ -14,7 +14,7 @@ const QueriesHeaderSection = ({
   setActiveTab,
 }: QueriesHeaderSectionProps) => {
   return (
-    <section className="w-full px-6 py-10 border-b border-gray-200">
+    <section className="w-full px-6 py-10 border-b  border-l border-r border-border">
       {/* Title + Subtitle */}
       <div className="mb-6">
         <h1 className="text-3xl font-bold text-primary-dark">Queries</h1>

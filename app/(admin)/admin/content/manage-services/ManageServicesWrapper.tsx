@@ -3,7 +3,7 @@ import ManageServices from "./ManageServices";
 import { getServices } from "./data";
 
 const ManageServicesWrapper = async () => {
-  const result = await getServices({});
+  const result = await getServices();
 
   return (
     <>
@@ -13,11 +13,7 @@ const ManageServicesWrapper = async () => {
           Failed to load services
         </div>
       ) : (
-        <ManageServices
-          initialServices={result.services}
-          cursor={result.nextCursor}
-          featureCount={result.featureCount}
-        />
+        <ManageServices initialServices={result.services} />
       )}
     </>
   );

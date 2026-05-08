@@ -1,21 +1,19 @@
 "use client";
 
 import React, { useState } from "react";
-import { ProjectItem, ProjectsPage } from "@/lib/types";
+import { ProjectItem } from "@/lib/types";
 import ProjectDrawer from "./ProjectDrawer";
 import Image from "next/image";
 import { ChevronDown, Loader2 } from "lucide-react";
 
-import { useDebounce } from "@/hooks/useDebounce";
-import { useProjects } from "@/hooks/useProjects";
-
-import {
-  useAddProjectMutation,
-  useDeleteProjectMutation,
-  useUpdateProjectMutation,
-  useUpdateProjectPriorityMutation,
-} from "./mutations";
 import { ProjectBackendType } from "@/lib/validations/project";
+import {
+  addProject,
+  deleteProjectDB,
+  updateProject,
+  updateProjectPriority,
+} from "./action";
+import toast from "react-hot-toast";
 
 export type ProjectDrawerResponse = {
   data: ProjectBackendType;
@@ -26,50 +24,14 @@ export type ProjectDrawerResponse = {
 
 type ManageProjectsProps = {
   initialProjects: ProjectItem[];
-  cursor: string | null;
-  featureCount: number;
 };
 
-const ManageProjects = ({
-  initialProjects,
-  cursor,
-  featureCount,
-}: ManageProjectsProps) => {
+const ManageProjects = ({ initialProjects }: ManageProjectsProps) => {
+  const [projects, setProjects] = useState<ProjectItem[]>(initialProjects);
   const [selected, setSelected] = useState<ProjectItem | null>(null);
   const [isCreating, setIsCreating] = useState(false);
-  const [showFeaturedOnly, setShowFeaturedOnly] = useState(false);
-  const [search, setSearch] = useState("");
-  const debouncedSearch = useDebounce(search, 400);
+  const [loadingId, setLoadingId] = useState<string | null>(null);
 
-  // ----------------------------
-  // Queries
-  // ----------------------------
-  const isSearching = debouncedSearch.length > 0;
-
-  const initialData = {
-    projects: initialProjects,
-    nextCursor: cursor,
-    featureCount,
-  };
-
-  const { data, fetchNextPage, hasNextPage, isFetchingNextPage } = useProjects({
-    initialData: isSearching || showFeaturedOnly ? undefined : initialData,
-    search: debouncedSearch,
-    featuredOnly: showFeaturedOnly,
-  });
-
-  const projects =
-    data?.pages.flatMap((page: ProjectsPage) => page.projects) ?? [];
-
-  const featuredCount = data?.pages[0]?.featureCount ?? 0;
-
-  // ----------------------------
-  // Mutations
-  // ----------------------------
-  const addMutation = useAddProjectMutation();
-  const updateMutation = useUpdateProjectMutation();
-  const deleteMutation = useDeleteProjectMutation();
-  const priorityMutation = useUpdateProjectPriorityMutation();
   // ----------------------------
   // Drawer handlers
   // ----------------------------
@@ -82,7 +44,7 @@ const ManageProjects = ({
     setSelected(null);
     setIsCreating(false);
   };
-  
+
   const openEdit = (p: ProjectItem) => {
     setSelected(p);
     setIsCreating(false);
@@ -92,39 +54,87 @@ const ManageProjects = ({
   // SAVE
   // ----------------------------
   const saveProject = async (payload: ProjectDrawerResponse) => {
-    if (isCreating) {
-      await addMutation.mutateAsync(payload, {
-        onSuccess: () => closeDrawer(),
-      });
-    } else {
-      await updateMutation.mutateAsync(payload, {
-        onSuccess: () => closeDrawer(),
-      });
+    try {
+      if (isCreating) {
+        const res = await addProject({
+          restData: payload.data,
+          imageFile: payload.imageFile,
+        });
+
+        if (!res.success) {
+          throw new Error(res.message);
+        }
+
+        // ✅ add new project to state (top of list)
+        setProjects((prev) => [res.newProject, ...prev]);
+
+        toast.success("Project added successfully");
+      } else {
+        if (!payload._id) {
+          toast.error("No project selected");
+          return;
+        }
+
+        const res = await updateProject({
+          id: payload._id,
+          restData: payload.data,
+          imageFile: payload.imageFile,
+          removeImage: payload.removeImage,
+        });
+
+        if (!res.success) {
+          throw new Error(res.message);
+        }
+
+        // ✅ update project in state
+        setProjects((prev) =>
+          prev.map((p) => (p._id === payload._id ? res.updated : p)),
+        );
+
+        toast.success("Project updated successfully");
+      }
+
+      closeDrawer();
+    } catch (err: unknown) {
+      console.error(err);
+
+      toast.error(err instanceof Error ? err.message : "Something went wrong");
     }
   };
 
   // ----------------------------
   // DELETE
   // ----------------------------
-  const deleteProject = (id: string) => {
-    deleteMutation.mutate(id);
+  const deleteProject = async (id: string) => {
+    if (loadingId) return;
+    try {
+      setLoadingId(id);
+
+      const res = await deleteProjectDB(id);
+
+      if (!res.success) throw new Error(res.message);
+
+      setProjects((prev) => prev.filter((s) => s._id !== id));
+
+      toast.success("Project deleted");
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : "Something went wrong");
+    } finally {
+      setLoadingId(null);
+    }
   };
 
-  // ----------------------------
-  // Load more
-  // ----------------------------
-  const loadMore = () => {
-    if (!hasNextPage || isFetchingNextPage) return;
-    fetchNextPage();
-  };
+  const updatePriority = async (id: string, priority: number) => {
+    try {
+      const res = await updateProjectPriority(id, priority);
 
-  const changePriority = (id: string, value: number) => {
-    if (value < 0) return;
-
-    priorityMutation.mutate({
-      id,
-      priority: value,
-    });
+      if (!res.success) throw new Error(res.message);
+      toast.success("Priority updated");
+      setProjects((prev) => prev.map((s) => (s._id === id ? res.updated : s)));
+    } catch (err) {
+      console.log(err);
+      toast.error("Failed to update Priority");
+    }
   };
 
   // ----------------------------
@@ -145,39 +155,9 @@ const ManageProjects = ({
 
         <button
           onClick={openCreate}
-          disabled={addMutation.isPending}
           className="px-4 w-full sm:w-auto ml-auto py-2 bg-primary text-white rounded-md flex items-center justify-center gap-2 disabled:opacity-50"
         >
-          {addMutation.isPending ? (
-            <>
-              <Loader2 className="w-4 h-4 animate-spin" />
-              Adding...
-            </>
-          ) : (
-            "+ Add Project"
-          )}
-        </button>
-      </div>
-
-      {/* Search */}
-      <div className="mb-4 flex gap-2">
-        <input
-          type="text"
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          placeholder="Search services..."
-          className="flex-1 px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
-        />
-
-        <button
-          onClick={() => setShowFeaturedOnly((prev) => !prev)}
-          className={`px-4 py-2 rounded-md text-sm font-medium border transition ${
-            showFeaturedOnly
-              ? "bg-primary text-white border-primary"
-              : "bg-white text-gray-600 border-gray-300"
-          }`}
-        >
-          {showFeaturedOnly ? "All Projects" : "Featured"}
+          + Add Project
         </button>
       </div>
 
@@ -185,9 +165,6 @@ const ManageProjects = ({
       <div className="space-y-3">
         {projects.length > 0 ? (
           projects.map((p, index) => {
-            const isDeleting =
-              deleteMutation.isPending && deleteMutation.variables === p._id;
-
             return (
               <details
                 key={p._id}
@@ -209,12 +186,6 @@ const ManageProjects = ({
 
                   {/* Actions */}
                   <div className="flex items-center ml-auto gap-2">
-                    {p.featured && (
-                      <span className="text-xs px-2 py-1 bg-green-100 text-green-600 rounded-full">
-                        Featured
-                      </span>
-                    )}
-
                     <button
                       onClick={(e) => {
                         e.preventDefault();
@@ -231,10 +202,10 @@ const ManageProjects = ({
                         e.stopPropagation();
                         deleteProject(p._id);
                       }}
-                      disabled={isDeleting}
+                      disabled={p._id == loadingId}
                       className="px-3 py-1 text-xs border border-red-300 text-red-500 rounded-md hover:bg-red-500 hover:text-white transition disabled:opacity-50 flex items-center justify-center min-w-[80px]"
                     >
-                      {isDeleting ? (
+                      {p._id === loadingId ? (
                         <Loader2 className="w-4 h-4 animate-spin" />
                       ) : (
                         "Delete"
@@ -255,36 +226,46 @@ const ManageProjects = ({
                         alt={p.title}
                         fill
                         className="object-cover"
+                        sizes="(max-width: 768px) 100vw, 33vw"
                       />
                     </div>
 
                     {/* Content */}
                     <div className="md:col-span-2">
                       <p className="text-sm text-muted mb-3">{p.description}</p>
-                      {p.featured && (
-                        <div className="flex items-center justify-between mb-4 p-3 bg-gray-50 rounded-md">
-                          {/* Priority Display */}
-                          <div className="text-sm">
-                            <span className="text-gray-500 mr-2">
-                              Priority:
-                            </span>
-                            <span className="font-semibold">
-                              {p.priority ?? 0}
-                            </span>
-                          </div>
-
-                          {/* Controls */}
-                          <input
-                            type="number"
-                            defaultValue={p.priority ?? 0}
-                            min={0}
-                            onBlur={(e) =>
-                              changePriority(p._id, Number(e.target.value))
-                            }
-                            className="w-20 px-2 py-1 border rounded text-sm focus:outline-none focus:ring-1 focus:ring-primary"
-                          />
+                      {p.demoUrl && (
+                        <div className="mb-4">
+                          <a
+                            href={p.demoUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center px-3 py-1 text-xs bg-primary text-white rounded-md hover:opacity-90 transition"
+                          >
+                            View Demo
+                          </a>
                         </div>
                       )}
+                      <div className="flex items-center justify-between mb-4 p-3 bg-gray-50 rounded-md">
+                        {/* Priority Display */}
+                        <div className="text-sm">
+                          <span className="text-gray-500 mr-2">Priority:</span>
+                          <span className="font-semibold">
+                            {p.priority ?? 0}
+                          </span>
+                        </div>
+
+                        {/* Controls */}
+                        <input
+                          type="number"
+                          defaultValue={p.priority ?? 0}
+                          min={0}
+                          onBlur={(e) =>
+                            updatePriority(p._id, Number(e.target.value))
+                          }
+                          className="w-20 px-2 py-1 border rounded text-sm focus:outline-none focus:ring-1 focus:ring-primary"
+                        />
+                      </div>
+
                       <div className="mb-2">
                         <p className="text-sm text-muted mb-1">Features</p>
                         <ul className="list-disc list-inside text-sm">
@@ -320,23 +301,6 @@ const ManageProjects = ({
             No projects found
           </div>
         )}
-
-        {hasNextPage && (
-          <button
-            onClick={loadMore}
-            disabled={isFetchingNextPage}
-            className="mt-6 px-4 py-2 border rounded-md disabled:opacity-50 flex items-center justify-center gap-2"
-          >
-            {isFetchingNextPage ? (
-              <>
-                <Loader2 className="w-4 h-4 animate-spin" />
-                Loading...
-              </>
-            ) : (
-              "Load More"
-            )}
-          </button>
-        )}
       </div>
 
       {/* Drawer */}
@@ -345,7 +309,6 @@ const ManageProjects = ({
           project={selected}
           onClose={closeDrawer}
           onSave={saveProject}
-          featuredCount={featuredCount}
         />
       )}
     </>

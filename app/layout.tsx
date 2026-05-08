@@ -22,7 +22,7 @@ export const metadata: Metadata = {
   },
 
   description:
-    "Nible Tech is a modern IT company based in Lahore, Pakistan, offering web development, digital marketing, WordPress development, AI chatbot integration, and custom software solutions.",
+    "Nible Tech is a modern IT company based in Lahore, Pakistan, offering web development, digital marketing, WordPress development,  and custom software solutions.",
 
   keywords: [
     "Nible Tech",
@@ -45,7 +45,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: "Nible Tech - Modern IT Solutions Company",
     description:
-      "Professional IT services including web development, AI chatbots, digital marketing, and custom software solutions.",
+      "Professional IT services including web development,  digital marketing, and custom software solutions.",
     url: "https://nibletech.com",
     siteName: "Nible Tech",
     type: "website",

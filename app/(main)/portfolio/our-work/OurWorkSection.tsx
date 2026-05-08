@@ -10,9 +10,9 @@ const OurWorkSection = () => {
           {/* Heading */}
           <div className="max-w-2xl mx-auto text-center">
             <h2 className="text-4xl md:text-5xl font-extrabold mb-4">
-              Our{" "}
+              From Idea{" "}
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary to-primary-dark">
-                Work
+                to Impact
               </span>
             </h2>
             <p className="text-gray-600">

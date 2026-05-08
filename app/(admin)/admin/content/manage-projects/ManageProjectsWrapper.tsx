@@ -3,7 +3,7 @@ import { getProjects } from "./data";
 import ManageProjects from "./ManageProjects";
 
 const ManageProjectsWrapper = async () => {
-  const result = await getProjects({});
+  const result = await getProjects();
   return (
     <>
       {!result.success ? (
@@ -14,8 +14,6 @@ const ManageProjectsWrapper = async () => {
       ) : (
         <ManageProjects
           initialProjects={result.projects}
-          cursor={result.nextCursor}
-          featureCount={result.featureCount}
         />
       )}
     </>

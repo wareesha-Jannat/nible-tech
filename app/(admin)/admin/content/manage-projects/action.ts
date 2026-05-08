@@ -11,6 +11,7 @@ import {
 import { ProjectItem } from "@/lib/types";
 
 import { auth } from "@/lib/auth";
+import { revalidatePath } from "next/cache";
 
 /* -------------------------------- ADD -------------------------------- */
 
@@ -69,6 +70,8 @@ export async function addProject({
       project.image = imageData;
       await project.save();
     }
+
+    await revalidatePath("/admin/content");
 
     return {
       success: true,
@@ -157,9 +160,10 @@ export async function updateProject({
     project.description = parsed.data.description;
     project.technologies = parsed.data.technologies;
     project.features = parsed.data.features;
-    project.featured = parsed.data.featured;
+    project.demoUrl = parsed.data.demoUrl;
 
     await project.save();
+    await revalidatePath("/admin/content");
 
     return {
       success: true,
@@ -222,7 +226,7 @@ export async function deleteProjectDB(
     }
 
     await Project.findByIdAndDelete(id);
-
+    await revalidatePath("/admin/content");
     return {
       success: true,
       message: "Project deleted successfully",
@@ -236,7 +240,7 @@ export async function deleteProjectDB(
     };
   }
 }
-type UpdatePriorityResponse = 
+type UpdatePriorityResponse =
   | {
       success: true;
       updated: ProjectItem;
@@ -246,7 +250,10 @@ type UpdatePriorityResponse =
       message: string;
     };
 
-export async function updateProjectPriority(id: string, priority: number) : Promise<UpdatePriorityResponse> {
+export async function updateProjectPriority(
+  id: string,
+  priority: number,
+): Promise<UpdatePriorityResponse> {
   try {
     const session = await auth();
 
@@ -288,7 +295,7 @@ export async function updateProjectPriority(id: string, priority: number) : Prom
     const updatedDoc = await Project.findByIdAndUpdate(
       id,
       { priority: parsedPriority },
-      { new: true },
+      { returnDocument : "after" },
     ).lean();
 
     if (!updatedDoc) {
@@ -297,7 +304,7 @@ export async function updateProjectPriority(id: string, priority: number) : Prom
         message: "Project not found",
       };
     }
-
+    await revalidatePath("/admin/content");
     return {
       success: true,
       updated: serializeData(updatedDoc) as ProjectItem,

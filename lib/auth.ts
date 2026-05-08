@@ -29,7 +29,10 @@ export const { auth, signIn, signOut, handlers } = NextAuth({
         const { email, password } = parsed.data;
 
         await connectDB();
-
+        // const userdb = await User.findOne({ email });
+        // const hashedPassword = await bcrypt.hash("admin@123", 10);
+        // userdb.password = hashedPassword;
+        // await userdb.save();
         const user = await User.findOne({ email }).lean();
 
         if (!user) {

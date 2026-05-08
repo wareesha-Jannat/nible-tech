@@ -2,7 +2,7 @@
 
 import React from "react";
 import GlassCard from "@/app/components/GlassCard";
-import { MessageCircle, Phone, Mail, Calendar } from "lucide-react";
+import { MessageCircle, Phone, Mail } from "lucide-react";
 import Link from "next/link";
 
 const ContactMethods = () => {

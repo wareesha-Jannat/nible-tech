@@ -3,7 +3,7 @@ import { z } from "zod";
 export const baseProjectSchema = z.object({
   title: z.string().min(2, "Name is required"),
   description: z.string().min(2, "Role is required"),
-  featured: z.boolean(),
+  demoUrl : z.string().optional(),
 });
 
 export const projectFormSchema = baseProjectSchema.extend({

@@ -9,31 +9,22 @@ import { useForm } from "react-hook-form";
 type FaqDrawerProps = {
   faq: FaqItem | null;
   onClose: () => void;
-  onSave: (data: FaqItem) => void;
-  featuredCount: number;
+  onSave: (data: FAQFormType) => void;
 };
 
-const MAX_FEATURED = 6;
-const FaqDrawer = ({ faq, onClose, onSave, featuredCount }: FaqDrawerProps) => {
+
+const FaqDrawer = ({ faq, onClose, onSave }: FaqDrawerProps) => {
   const {
     register,
     handleSubmit,
-    setValue,
     formState: { errors, isSubmitting },
   } = useForm<FAQFormType>({
     resolver: zodResolver(faqSchema),
     defaultValues: faq || {
       question: "",
       answer: "",
-      featured: false,
     },
   });
-
-  // 🔥 live calculated count (no stale props)
-  const wasOriginallyFeatured = faq?.featured ?? false;
-
-  const isFeaturedDisabled =
-    featuredCount >= MAX_FEATURED && !wasOriginallyFeatured;
 
   // ESC disable scroll
   useEffect(() => {
@@ -44,13 +35,8 @@ const FaqDrawer = ({ faq, onClose, onSave, featuredCount }: FaqDrawerProps) => {
   }, []);
 
   const onSubmit = async (data: FAQFormType) => {
-    const finalData: FaqItem = {
-      ...faq,
-      ...data,
-      _id: faq?._id || "",
-    };
 
-    await onSave(finalData);
+    await onSave(data);
   };
 
   return (
@@ -106,24 +92,6 @@ const FaqDrawer = ({ faq, onClose, onSave, featuredCount }: FaqDrawerProps) => {
                 />
               </div>
 
-              {/* FEATURED */}
-              <div className="flex items-center justify-between">
-                <label className="text-sm text-muted font-medium">
-                  Featured Service
-                </label>
-
-                <input
-                  type="checkbox"
-                  disabled={isFeaturedDisabled}
-                  onChange={(e) => setValue("featured", e.target.checked)}
-                />
-              </div>
-
-              {isFeaturedDisabled && (
-                <p className="text-xs text-red-500">
-                  Maximum {MAX_FEATURED} featured services allowed
-                </p>
-              )}
             </div>
 
             {/* FOOTER */}

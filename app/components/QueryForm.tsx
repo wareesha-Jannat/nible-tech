@@ -4,7 +4,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { ContactFormType, contactSchema } from "@/lib/validations/contact";
 import { Loader2 } from "lucide-react";
-import { useFeaturedServices } from "@/hooks/useFeaturedServices";
+import { useServices } from "@/hooks/useServices";
 
 type Props = {
   defaultValues?: ContactFormType;
@@ -29,17 +29,15 @@ const QueryForm = ({
     defaultValues,
   });
 
-  const { data: services, isLoading } = useFeaturedServices();
+  const { data: services, isLoading } = useServices();
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key !== "Enter") return;
 
     const target = e.target as HTMLElement;
 
-    // ❌ Allow Enter in textarea
     if (target.tagName === "TEXTAREA") return;
 
-    // ❌ Prevent form submit
     e.preventDefault();
 
     const form = target.closest("form");

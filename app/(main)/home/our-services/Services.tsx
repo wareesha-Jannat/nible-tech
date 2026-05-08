@@ -1,5 +1,4 @@
 import React from "react";
-import Link from "next/link";
 import GlassCard from "@/app/components/GlassCard";
 import { ServicePreview } from "./data";
 import { iconMap } from "@/lib/utils";
@@ -13,7 +12,7 @@ const Services = ({ serviceData }: ServicesProps) => {
   return (
     <>
       {/* Services Cards Grid */}
-      <div className="grid grid-cols-1  lg:grid-cols-3 gap-8 px-8 mb-16">
+      <div className="grid lg:grid-cols-3 gap-8 px-6 sm:px-10 mb-16">
         {serviceData.map((service, index) => (
           <GlassCard
             key={index}
@@ -24,7 +23,7 @@ const Services = ({ serviceData }: ServicesProps) => {
             <div className="flex flex-col sm:flex-row sm:items-center space-y-4 sm:space-y-0 sm:space-x-5 mb-5 z-10">
               {/* Icon Box */}
               <div className="w-14 h-14 rounded-xl bg-primary/5 border border-primary/20 group-hover:border-primary/40 group-hover:bg-primary/10 flex items-center justify-center transition-colors duration-500 shrink-0">
-                {React.createElement(iconMap[service.category] || Code, {
+                {React.createElement(iconMap[service.title] || Code, {
                   size: 28,
                   className: "text-primary-dark",
                 })}
@@ -37,33 +36,23 @@ const Services = ({ serviceData }: ServicesProps) => {
 
             {/* Quick description */}
             <p className="text-gray-600 leading-relaxed z-10 font-light text-[15px]">
-              {service.description}
+              {service.shortDescription}
             </p>
+            {/* Features */}
+            {service.features?.length > 0 && (
+              <div className="mt-6 grid sm:grid-cols-2 gap-x-6 gap-y-2">
+                {service.features.slice(0, 6).map((feature, i) => (
+                  <div key={i} className="flex items-start gap-2">
+                    <span className="text-primary-dark text-sm">✔</span>
+                    <span className="text-sm text-gray-600 leading-snug">
+                      {feature}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            )}
           </GlassCard>
         ))}
-      </div>
-
-      {/* View All Services CTA */}
-      <div className="flex justify-center mt-4">
-        <Link
-          href="/services"
-          className="inline-flex items-center justify-center px-8 py-4 rounded-lg font-semibold text-primary bg-white border border-gray-300 hover:bg-primary hover:text-white hover:border-primary transition-all duration-300 hover:shadow-[0_4px_20px_rgba(124,58,237,0.2)] hover:-translate-y-1 active:scale-95 text-lg"
-        >
-          View All Services
-          <svg
-            className="w-5 h-5 ml-3"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2.5}
-              d="M14 5l7 7m0 0l-7 7m7-7H3"
-            />
-          </svg>
-        </Link>
       </div>
     </>
   );

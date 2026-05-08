@@ -63,7 +63,7 @@ const QueriesList = ({ activeTab }: { activeTab: string }) => {
 
       return true;
     } catch (err) {
-      console.log(err)
+      console.log(err);
       toast.error("Failed to update query");
       return false;
     } finally {
@@ -92,7 +92,7 @@ const QueriesList = ({ activeTab }: { activeTab: string }) => {
   };
 
   return (
-    <section className="w-full px-4 md:px-10 py-10">
+    <section className="w-full px-4 md:px-10 py-10 border-b border-l border-r border-border">
       <input
         value={search}
         onChange={(e) => setSearch(e.target.value)}
@@ -112,10 +112,10 @@ const QueriesList = ({ activeTab }: { activeTab: string }) => {
             return (
               <details
                 key={query._id}
-                className="group border-b border-gray-200"
+                className="group border-b border-border"
               >
                 {/* Header */}
-                <summary className="flex flex-wrap gap-4 px-2 sm:px-6 py-2 cursor-pointer">
+                <summary className="flex flex-wrap gap-3 px-4 sm:px-6 py-4 cursor-pointer">
                   {/* Left */}
                   <div className="flex items-center gap-3">
                     <span className="font-semibold text-gray-500">

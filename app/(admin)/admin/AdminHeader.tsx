@@ -4,7 +4,7 @@ import React, { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
-import { LayoutDashboard, Mail, Layers, User, LogOut } from "lucide-react";
+import { User, LogOut } from "lucide-react";
 import { SessionUser } from "@/lib/types";
 import { useQueryClient } from "@tanstack/react-query";
 import { signOut } from "next-auth/react";
@@ -22,22 +22,20 @@ const AdminHeader = ({ user }: { user: SessionUser }) => {
     {
       name: "Dashboard",
       path: "/admin/dashboard",
-      icon: <LayoutDashboard className="w-5 h-5 mr-1.5" />,
     },
     {
       name: "Queries",
       path: "/admin/queries",
-      icon: <Mail className="w-5 h-5 mr-1.5" />,
+
     },
     {
       name: "Content",
       path: "/admin/content",
-      icon: <Layers className="w-5 h-5 mr-1.5" />,
     },
   ];
 
   return (
-    <header className="w-full  z-50 bg-transparent backdrop-blur-md py-5 border-b border-border text-primary">
+    <header className="w-full  z-50 bg-transparent backdrop-blur-md py-6 border-b border-border text-primary">
       <div className="flex justify-between items-center px-10 md:px-16 mx-auto w-full max-w-[1280px]">
         {/* Logo */}
         <Link href="/" className="flex items-center space-x-2 group">
@@ -54,8 +52,8 @@ const AdminHeader = ({ user }: { user: SessionUser }) => {
         </Link>
 
         {/* Desktop Nav */}
-        <nav className="hidden min-[850px]:flex items-center space-x-5">
-          <ul className="flex space-x-5 items-center text-sm font-medium">
+        <nav className="hidden min-[900px]:flex items-center space-x-10">
+          <ul className="flex space-x-10 items-center text-sm font-medium">
             {navLinks.map((link) => {
               const isActive = pathname === link.path;
               return (
@@ -66,7 +64,6 @@ const AdminHeader = ({ user }: { user: SessionUser }) => {
                       isActive ? "text-primary-dark" : "text-primary"
                     }`}
                   >
-                    {link.icon}
                     {link.name}
                     <span
                       className={`absolute bottom-0 left-0 w-full h-[2px] bg-primary origin-left transition-transform duration-300 ${
@@ -98,14 +95,14 @@ const AdminHeader = ({ user }: { user: SessionUser }) => {
                 </div>
               )}
 
-              <span className="font-medium group-hover:text-primary-dark">
+              <span className="font-medium text-sm group-hover:text-primary-dark">
                 {user?.name || "Admin"}
               </span>
             </Link>
           </div>
           <button
             onClick={handleLogout}
-            className="flex items-center font-bold gap-2 text-primary-light hover:text-primary-dark transition"
+            className="flex items-center font-bold gap-2 text-sm  text-primary-light hover:text-primary-dark transition"
           >
             <LogOut className="w-5 h-5" />
             Logout
@@ -114,7 +111,7 @@ const AdminHeader = ({ user }: { user: SessionUser }) => {
 
         {/* Mobile Toggle */}
         <button
-          className="min-[850px]:hidden z-50 p-2"
+          className="min-[900px]:hidden z-50 p-2"
           onClick={() => setIsMenuOpen(!isMenuOpen)}
         >
           <div className="w-6 flex flex-col items-end gap-1.5">
@@ -139,7 +136,7 @@ const AdminHeader = ({ user }: { user: SessionUser }) => {
 
       {/* Mobile Menu */}
       <div
-        className={`min-[850px]:hidden absolute top-full left-0 w-full bg-white border-b border-gray-200 shadow-xl transition-all duration-500 ${
+        className={`min-[900px]:hidden absolute top-full left-0 w-full bg-white border-b border-gray-200 shadow-xl transition-all duration-500 ${
           isMenuOpen ? "max-h-screen py-6" : "max-h-0 overflow-hidden"
         }`}
       >
@@ -157,7 +154,7 @@ const AdminHeader = ({ user }: { user: SessionUser }) => {
                       : "text-primary"
                   }`}
                 >
-                  {link.icon}
+              
                   {link.name}
                 </Link>
               </li>

@@ -4,67 +4,49 @@ import React, { useEffect, useState } from "react";
 import { ServiceItem } from "@/lib/types";
 import { ChevronDown, Loader2 } from "lucide-react";
 import ServiceDrawer from "./ServiceDrawer";
+import toast from "react-hot-toast";
 
-import { useServices } from "@/hooks/useServices";
 import {
-  useAddServiceMutation,
-  useUpdateServiceMutation,
-  useDeleteServiceMutation,
-  useUpdateServicePriorityMutation,
-} from "./mutations";
-import { useDebounce } from "@/hooks/useDebounce";
+  addService,
+  updateService,
+  deleteServiceDB,
+  updateServiceOrder,
+} from "./action";
+import { ServiceFormType } from "@/lib/validations/service";
+import { toBackendService } from "@/lib/utils";
 
 type ManageServicesProps = {
   initialServices: ServiceItem[];
-  cursor: string | null;
-  featureCount: number;
 };
 
-const ManageServices = ({
+export default function ManageServices({
   initialServices,
-  cursor,
-  featureCount,
-}: ManageServicesProps) => {
+}: ManageServicesProps) {
+  // ----------------------------
+  // LOCAL STATE (source of truth)
+  // ----------------------------
+  const [services, setServices] = useState<ServiceItem[]>(initialServices);
+
   const [selectedService, setSelectedService] = useState<ServiceItem | null>(
     null,
   );
 
   const [isCreating, setIsCreating] = useState(false);
-  const [showFeaturedOnly, setShowFeaturedOnly] = useState(false);
+  const [loadingId, setLoadingId] = useState<string | null>(null);
   const [search, setSearch] = useState("");
-  const debouncedSearch = useDebounce(search, 400);
+  const [category, setCategory] = useState<string>("all");
 
   // ----------------------------
-  // Queries
+  // DRAWER
   // ----------------------------
-  const isSearching = debouncedSearch.length > 0;
-  const initialData = {
-    services: initialServices,
-    nextCursor: cursor,
-    featureCount,
+  const openEdit = (service: ServiceItem) => {
+    setSelectedService(service);
+    setIsCreating(false);
   };
-  const { data, fetchNextPage, hasNextPage, isFetchingNextPage } = useServices({
-    initialData: isSearching || showFeaturedOnly ? undefined : initialData,
-    search: debouncedSearch,
-    featuredOnly: showFeaturedOnly,
-  });
-  const services = data?.pages.flatMap((page) => page.services) ?? [];
 
-  const featuredCount = data?.pages[0]?.featureCount ?? 0;
-
-  // ----------------------------
-  // Mutations
-  // ----------------------------
-  const addMutation = useAddServiceMutation();
-  const updateMutation = useUpdateServiceMutation();
-  const deleteMutation = useDeleteServiceMutation();
-  const priorityMutation = useUpdateServicePriorityMutation();
-  // ----------------------------
-  // Load more
-  // ----------------------------
-  const loadMore = () => {
-    if (!hasNextPage || isFetchingNextPage) return;
-    fetchNextPage();
+  const openCreate = () => {
+    setSelectedService(null);
+    setIsCreating(true);
   };
 
   const closeDrawer = () => {
@@ -73,7 +55,7 @@ const ManageServices = ({
   };
 
   // ----------------------------
-  // ESC + scroll lock
+  // ESC LOCK
   // ----------------------------
   useEffect(() => {
     const handleEsc = (e: KeyboardEvent) => {
@@ -92,69 +74,97 @@ const ManageServices = ({
   }, [selectedService, isCreating]);
 
   // ----------------------------
-  // Drawer handlers
+  // ADD / UPDATE
   // ----------------------------
-  const openEdit = (service: ServiceItem) => {
-    setSelectedService(service);
-    setIsCreating(false);
-  };
+  const saveService = async (data: ServiceFormType) => {
+    const backendPayload = { ...toBackendService(data) };
+    try {
+      if (isCreating) {
+        const res = await addService(backendPayload);
 
-  const openCreate = () => {
-    setSelectedService(null);
-    setIsCreating(true);
-  };
+        if (!res.success) throw new Error(res.message);
 
-  // ----------------------------
-  // SAVE (ADD / UPDATE)
-  // ----------------------------
-  const saveService = async (data: ServiceItem) => {
-    const { _id, ...rest } = data;
+        setServices((prev) => [res.newService, ...prev]);
+        toast.success("Service added");
+      } else {
+        if (!selectedService) {
+          toast.error("No service selected");
+          return;
+        }
 
-    if (isCreating) {
-      await addMutation.mutateAsync(rest, {
-        onSuccess: () => {
-          closeDrawer();
-        },
-      });
-    } else {
-      await updateMutation.mutateAsync(
-        {
-          id: _id,
-          data: rest,
-        },
-        {
-          onSuccess: () => {
-            closeDrawer();
-          },
-        },
-      );
+        const res = await updateService(selectedService._id, backendPayload);
+
+        if (!res.success) throw new Error(res.message);
+
+        setServices((prev) =>
+          prev.map((s) => (s._id === selectedService._id ? res.updated : s)),
+        );
+
+        toast.success("Service updated");
+      }
+
+      closeDrawer();
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : "Something went wrong");
     }
   };
 
   // ----------------------------
   // DELETE
   // ----------------------------
-  const deleteService = (id: string) => {
-    deleteMutation.mutate(id);
+  const deleteService = async (id: string) => {
+    if (loadingId) return;
+    try {
+      setLoadingId(id);
+
+      const res = await deleteServiceDB(id);
+
+      if (!res.success) throw new Error(res.message);
+
+      setServices((prev) => prev.filter((s) => s._id !== id));
+
+      toast.success("Service deleted");
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : "Something went wrong");
+    } finally {
+      setLoadingId(null);
+    }
   };
 
-  const changePriority = (id: string, value: number) => {
-    if (value < 0) return;
+  // ----------------------------
+  // ORDER UPDATE (simple inline)
+  // ----------------------------
+  const updateOrder = async (id: string, order: number) => {
+    try {
+      const res = await updateServiceOrder(id, order);
 
-    priorityMutation.mutate({
-      id,
-      priority: value,
-    });
+      if (!res.success) throw new Error(res.message);
+      toast.success("Order Updated");
+      setServices((prev) => prev.map((s) => (s._id === id ? res.updated : s)));
+    } catch (err) {
+      console.log(err);
+      toast.error("Failed to update order");
+    }
   };
+
+  const filteredServices = services.filter((service) => {
+    const matchSearch =
+      service.title.toLowerCase().includes(search.toLowerCase()) ||
+      service.shortDescription.toLowerCase().includes(search.toLowerCase());
+
+    const matchCategory =
+      category === "all" ? true : service.category === category;
+
+    return matchSearch && matchCategory;
+  });
 
   // ----------------------------
   // UI
   // ----------------------------
-
   return (
     <>
-      {/* Header */}
-      <div className="flex flex-wrap items-center  gap-4 mb-8">
+      {/* HEADER */}
+      <div className="flex flex-wrap items-center gap-4 mb-8">
         <div>
           <h2 className="text-2xl sm:text-3xl font-bold text-primary-dark">
             Services
@@ -164,191 +174,120 @@ const ManageServices = ({
 
         <button
           onClick={openCreate}
-          disabled={addMutation.isPending}
-          className="w-full sm:w-auto ml-auto px-4 py-2 bg-primary text-white rounded-md flex items-center justify-center gap-2 disabled:opacity-50"
+          className="ml-auto px-4 py-2 bg-primary text-white rounded-md"
         >
-          {addMutation.isPending ? (
-            <>
-              <Loader2 className="w-4 h-4 animate-spin" />
-              Adding...
-            </>
-          ) : (
-            "+ Add Service"
-          )}
+          + Add Service
         </button>
       </div>
-
-      <div className="mb-4 flex gap-2">
+      <div className="flex flex-wrap gap-3 mb-4">
+        {/* SEARCH */}
         <input
           type="text"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           placeholder="Search services..."
-          className="flex-1 px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
+          className="border px-3 py-2 rounded-md w-full sm:w-64"
         />
 
-        <button
-          onClick={() => setShowFeaturedOnly((prev) => !prev)}
-          className={`px-4 py-2 rounded-md text-sm font-medium border transition ${
-            showFeaturedOnly
-              ? "bg-primary text-white border-primary"
-              : "bg-white text-gray-600 border-gray-300"
-          }`}
+        {/* CATEGORY FILTER */}
+        <select
+          value={category}
+          onChange={(e) => setCategory(e.target.value)}
+          className="border px-3 py-2 rounded-md"
         >
-          {showFeaturedOnly ? "All Services" : "Featured"}
-        </button>
+          <option value="all">All</option>
+          <option value="seo">SEO</option>
+          <option value="web">Web</option>
+          <option value="marketing">Marketing</option>
+        </select>
       </div>
-      {/*Cards*/}
-      <div className="p-3 sm:p-4 bg-white overflow-hidden rounded-2xl border border-border hover:shadow-lg transition-shadow">
-        {services && services.length > 0 ? (
-          services.map((service, index) => {
-            const isDeleting =
-              deleteMutation.isPending &&
-              deleteMutation.variables === service._id;
-            return (
-              <details
-                key={service._id}
-                className="group border-b rounded-2xl border-border"
-              >
-                {/* Summary */}
-                <summary className="flex flex-wrap gap-3 px-4 sm:px-6 py-4 cursor-pointer list-none">
-                  {/* LEFT */}
-                  <div className="flex items-center gap-3">
-                    <span className="text-muted font-medium text-sm">
-                      {index + 1}.
-                    </span>
-                    <h3 className="font-semibold text-primary-dark text-sm sm:text-base">
-                      {service.title}
-                    </h3>
-                  </div>
 
-                  {/* RIGHT */}
-                  <div className="flex ml-auto items-center gap-2 sm:gap-3">
-                    {service.featured && (
-                      <span className="text-xs px-2 py-1 bg-green-100 text-green-600 rounded-full">
-                        Featured
-                      </span>
-                    )}
+      {/* LIST */}
+      <div className="p-4 sm:p-6 bg-white rounded-2xl border-border">
+        {filteredServices.map((service, index) => (
+          <details key={service._id} className="border-b py-4">
+            <summary className="flex flex-wrap gap-3 px-4 sm:px-6 py-4 cursor-pointer">
+              <div className="flex gap-3">
+                <span>{index + 1}.</span>
+                <h3 className="font-semibold">{service.title}</h3>
+              </div>
+       
+              <div className="flex items-center ml-auto gap-2">
+                <button
+                  onClick={(e) => {
+                    e.preventDefault();
+                    openEdit(service);
+                  }}
+                  className="px-3 py-1 border rounded"
+                >
+                  Edit
+                </button>
 
-                    <button
-                      onClick={(e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        openEdit(service);
-                      }}
-                      className="px-3 py-1 text-xs sm:text-sm border border-primary text-primary rounded hover:bg-primary hover:text-white transition"
-                    >
-                      Edit
-                    </button>
-
-                    <button
-                      onClick={(e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        deleteService(service._id);
-                      }}
-                      disabled={isDeleting}
-                      className="px-3 py-1 text-xs sm:text-sm border border-red-300 text-red-500 rounded 
-             hover:bg-red-500 hover:text-white transition disabled:opacity-50 
-             flex items-center justify-center min-w-[80px]"
-                    >
-                      {isDeleting ? (
-                        <Loader2 className="w-4 h-4 animate-spin" />
-                      ) : (
-                        "Delete"
-                      )}
-                    </button>
-
-                    <ChevronDown className="w-4 h-4 text-gray-400 transition-transform group-open:rotate-180" />
-                  </div>
-                </summary>
-
-                {/* Expanded */}
-                <div className="px-4 sm:px-6 py-3 border-t">
-                  <p className="text-sm text-muted mb-3">
-                    {service.description}
-                  </p>
-                  {service.featured && (
-                    <div className="flex items-center justify-between mb-4 p-3 bg-gray-50 rounded-md">
-                      {/* Priority Display */}
-                      <div className="text-sm">
-                        <span className="text-gray-500 mr-2">Priority:</span>
-                        <span className="font-semibold">
-                          {service.priority ?? 0}
-                        </span>
-                      </div>
-
-                      {/* Controls */}
-                      <input
-                        type="number"
-                        defaultValue={service.priority ?? 0}
-                        min={0}
-                        onBlur={(e) =>
-                          changePriority(service._id, Number(e.target.value))
-                        }
-                        className="w-20 px-2 py-1 border rounded text-sm focus:outline-none focus:ring-1 focus:ring-primary"
-                      />
-                    </div>
+                <button
+                  onClick={(e) => {
+                    e.preventDefault();
+                    deleteService(service._id);
+                  }}
+                  className="px-3 py-1 border text-red-500 rounded"
+                >
+                  {loadingId === service._id ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : (
+                    "Delete"
                   )}
-                  <div className="mb-2">
-                    <p className="text-sm text-muted mb-1">Features</p>
-                    <ul className="list-disc list-inside text-sm">
-                      {service.features.map((f, i) => (
-                        <li key={i}>{f}</li>
-                      ))}
-                    </ul>
-                  </div>
+                </button>
+                 <ChevronDown className="transition-transform duration-200 group-open:rotate-180" />
+              </div>
+            </summary>
 
-                  <div>
-                    <p className="text-sm text-gray-500 mb-1">Technologies</p>
-                    <div className="flex flex-wrap gap-2">
-                      {service.technologies.map((tech, i) => (
-                        <span
-                          key={i}
-                          className="text-xs px-2 py-1 bg-primary/10 rounded"
-                        >
-                          {tech}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-              </details>
-            );
-          })
-        ) : (
-          <div className="text-center text-gray-500 py-10">
-            No services found
-          </div>
-        )}
-        {hasNextPage && (
-          <button
-            onClick={loadMore}
-            disabled={isFetchingNextPage}
-            className="mt-6 px-4 py-2 border rounded-md disabled:opacity-50 flex items-center justify-center gap-2"
-          >
-            {isFetchingNextPage ? (
-              <>
-                <Loader2 className="w-4 h-4 animate-spin" />
-                Loading...
-              </>
-            ) : (
-              "Load More"
-            )}
-          </button>
-        )}
+            <div className="mt-3 text-sm text-gray-600">
+              <p>{service.shortDescription}</p>
+              <p className="mt-1">{service.overview}</p>
+
+              {/* ORDER */}
+              <div className="mt-3 flex items-center gap-2">
+                <span>Order:</span>
+                <input
+                  type="number"
+                  defaultValue={service.order ?? 0}
+                  onBlur={(e) =>
+                    updateOrder(service._id, Number(e.target.value))
+                  }
+                  className="border px-2 py-1 w-20"
+                />
+              </div>
+
+              {/* FEATURES */}
+              <ul className="mt-3 space-y-2">
+                {service.features.map((f, i) => (
+                  <li key={i}>
+                    <div className="font-medium">{f.title}</div>
+                    <div className="text-xs text-gray-500">{f.description}</div>
+                  </li>
+                ))}
+              </ul>
+
+              {/* TECH */}
+              <div className="flex flex-wrap gap-2 mt-3">
+                {service.technologies.map((t, i) => (
+                  <span key={i} className="text-xs px-2 py-1 bg-gray-100">
+                    {t}
+                  </span>
+                ))}
+              </div>
+            </div>
+          </details>
+        ))}
       </div>
 
+      {/* DRAWER */}
       {(selectedService || isCreating) && (
         <ServiceDrawer
           service={selectedService}
           onClose={closeDrawer}
           onSave={saveService}
-          featuredCount={featuredCount}
         />
       )}
     </>
   );
-};
-
-export default ManageServices;
+}

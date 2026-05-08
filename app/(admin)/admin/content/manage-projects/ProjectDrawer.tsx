@@ -23,14 +23,13 @@ type Props = {
   project: ProjectItem | null;
   onClose: () => void;
   onSave: (data: ProjectDrawerResponse) => Promise<void>;
-  featuredCount: number;
 };
 
-const MAX_FEATURED = 6;
+
 const MAX_TECH = 6;
 const MAX_FEATURES = 4;
 
-const ProjectDrawer = ({ project, onClose, onSave, featuredCount }: Props) => {
+const ProjectDrawer = ({ project, onClose, onSave }: Props) => {
   const [croppedImage, setCroppedImage] = useState<File | null>(null);
   const [removeImage, setRemoveImage] = useState(false);
 
@@ -52,7 +51,7 @@ const ProjectDrawer = ({ project, onClose, onSave, featuredCount }: Props) => {
           description: "",
           technologies: [],
           features: [],
-          featured: false,
+          demoUrl: "",
         },
   });
 
@@ -125,14 +124,6 @@ const ProjectDrawer = ({ project, onClose, onSave, featuredCount }: Props) => {
   };
 
   // ----------------------------
-  // FEATURED LOGIC
-  // ----------------------------
-  const wasOriginallyFeatured = project?.featured ?? false;
-
-  const isFeaturedDisabled =
-    featuredCount >= MAX_FEATURED && !wasOriginallyFeatured;
-
-  // ----------------------------
   // SUBMIT
   // ----------------------------
   const onSubmit = async (data: ProjectFormType) => {
@@ -147,9 +138,9 @@ const ProjectDrawer = ({ project, onClose, onSave, featuredCount }: Props) => {
     const backendData: ProjectBackendType = {
       title: data.title,
       description: data.description,
-      featured: data.featured,
       technologies: cleanedTech,
       features: cleanedFeatures,
+      demoUrl: data.demoUrl,
     };
 
     await onSave({
@@ -190,7 +181,7 @@ const ProjectDrawer = ({ project, onClose, onSave, featuredCount }: Props) => {
                 <ImageInput
                   src={imagePreview}
                   shape="rect"
-                  aspectRatio={16 / 9} // ✅ THIS is the fix
+                  aspectRatio={16 / 9}
                   previewSize={140}
                   onImageCropped={(file) => {
                     setCroppedImage(file);
@@ -313,25 +304,25 @@ const ProjectDrawer = ({ project, onClose, onSave, featuredCount }: Props) => {
                   </button>
                 </div>
               </div>
-
-              {/* FEATURED */}
-              <div className="flex items-center justify-between">
+              {/* DEMO URL */}
+              <div>
                 <label className="text-sm font-medium text-gray-600">
-                  Featured
+                  Demo URL
                 </label>
 
                 <input
-                  type="checkbox"
-                  {...register("featured")}
-                  disabled={isFeaturedDisabled}
+                  type="url"
+                  {...register("demoUrl")}
+                  placeholder="https://your-project-demo.com"
+                  className="w-full mt-2 px-4 py-3 border rounded-lg"
                 />
-              </div>
 
-              {isFeaturedDisabled && (
-                <p className="text-xs text-red-500">
-                  Maximum {MAX_FEATURED} featured projects allowed
-                </p>
-              )}
+                {errors.demoUrl && (
+                  <p className="text-xs text-red-500 mt-1">
+                    {errors.demoUrl.message}
+                  </p>
+                )}
+              </div>
             </div>
 
             {/* FOOTER */}

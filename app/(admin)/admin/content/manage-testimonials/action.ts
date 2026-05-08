@@ -10,6 +10,7 @@ import {
 } from "@/lib/validations/testimonials";
 import { Testimonial } from "@/models/Testimonial";
 import { auth } from "@/lib/auth";
+import { revalidatePath } from "next/cache";
 
 type AddTestimonialResponse =
   | {
@@ -70,7 +71,7 @@ export async function addTestimonial({
       testimonial.image = imageData;
       await testimonial.save();
     }
-
+    await revalidatePath("/admin/content");
     const plain = testimonial.toObject();
 
     return {
@@ -79,7 +80,7 @@ export async function addTestimonial({
       newTestimonial: serializeData(plain) as TestimonialItem,
     };
   } catch (error) {
-    console.log(error)
+    console.log(error);
     return {
       success: false,
       message: "Failed to add testimonial",
@@ -157,11 +158,11 @@ export async function updateTestimonial({
     testimonial.name = parsed.data.name;
     testimonial.role = parsed.data.role;
     testimonial.message = parsed.data.message;
-    testimonial.featured = parsed.data.featured;
+    testimonial.company = parsed.data.company;
 
     await testimonial.save();
     const plain = testimonial.toObject();
-
+    await revalidatePath("/admin/content");
     return {
       success: true,
       message: "Testimonial updated successfully",
@@ -221,6 +222,7 @@ export async function deleteTestimonialDB(
     }
 
     await Testimonial.findByIdAndDelete(id);
+    await revalidatePath("/admin/content");
     return {
       success: true,
       message: "Testimonial deleted successfully",
@@ -235,78 +237,5 @@ export async function deleteTestimonialDB(
     };
   }
 }
-type UpdatePriorityResponse = 
-  | {
-      success: true;
-      updated: TestimonialItem;
-    }
-  | {
-      success: false;
-      message: string;
-    };
 
-export async function updateTestimonialPriority(id: string, priority: number) : Promise<UpdatePriorityResponse> {
-  try {
-    const session = await auth();
 
-    if (!session?.user) {
-      return {
-        success: false,
-        message: "unauthorized",
-      };
-    }
-    if (session.user.role !== "SUPER_ADMIN") {
-      return {
-        success: false,
-        message: "Forbidden",
-      };
-    }
-    if (!id) {
-      return {
-        success: false,
-        message: "Testimonial ID is required",
-      };
-    }
-
-    const parsedPriority = Number(priority);
-
-    if (isNaN(parsedPriority)) {
-      return {
-        success: false,
-        message: "Priority must be a valid number",
-      };
-    }
-
-    if (parsedPriority < 0) {
-      return {
-        success: false,
-        message: "Priority cannot be negative",
-      };
-    }
-
-    const updatedDoc = await Testimonial.findByIdAndUpdate(
-      id,
-      { priority: parsedPriority },
-      { new: true },
-    ).lean();
-
-    if (!updatedDoc) {
-      return {
-        success: false,
-        message: "Testimonial not found",
-      };
-    }
-
-    return {
-      success: true,
-      updated: serializeData(updatedDoc) as TestimonialItem,
-    };
-  } catch (error) {
-    console.error("updateTestimonialPriority error:", error);
-
-    return {
-      success: false,
-      message: "Something went wrong while updating priority",
-    };
-  }
-}

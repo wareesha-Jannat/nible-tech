@@ -1,9 +1,9 @@
 import React from 'react'
-import { getFeaturedServices } from './data'
+import { getServices } from './data'
 import Services from './Services';
 
 const OurServiceSectionWrapper = async() => {
-    const result = await getFeaturedServices();
+    const result = await getServices();
 
   return (
     <>

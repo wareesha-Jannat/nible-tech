@@ -1,20 +1,22 @@
-import { ServicesPage } from "@/lib/types";
-import { useInfiniteQuery } from "@tanstack/react-query";
+"use client";
 
-type UseServicesProps = {
-  initialData?: ServicesPage;
-  search?: string;
-    featuredOnly? :boolean;
+import { Category } from "@/lib/serviceDesignConfig";
+import { useQuery } from "@tanstack/react-query";
+
+export type ServiceNavItem = {
+  _id: string;
+  title: string;
+  slug: string;
+  category: Category;
+  order: number;
 };
 
-export function useServices({ initialData, search = "", featuredOnly }: UseServicesProps) {
-  return useInfiniteQuery({
-    queryKey: ["services", search, featuredOnly],
+export function useServices() {
+  return useQuery<ServiceNavItem[]>({
+    queryKey: ["services"],
 
-    queryFn: async ({ pageParam }): Promise<ServicesPage> => {
-      const res = await fetch(
-        `/api/services?cursor=${pageParam ?? ""}&limit=5&search=${search ?? ""}&featured=${featuredOnly ?? false}`,
-      );
+    queryFn: async () => {
+      const res = await fetch("/api/services");
 
       if (!res.ok) {
         throw new Error("Failed to fetch services");
@@ -22,15 +24,8 @@ export function useServices({ initialData, search = "", featuredOnly }: UseServi
 
       return res.json();
     },
-    initialPageParam: null as string | null,
 
-    getNextPageParam: (lastPage) => lastPage.nextCursor ?? undefined,
-
-    initialData: initialData
-      ? {
-          pages: [initialData],
-          pageParams: [null],
-        }
-      : undefined,
+    staleTime: 1000 * 60 * 10, // 10 min cache
+    refetchOnWindowFocus: false,
   });
 }

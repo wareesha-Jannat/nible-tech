@@ -71,6 +71,7 @@ const ImageInput: React.FC<ImageInputProps> = ({
           alt="preview"
           width={previewSize}
           height={previewSize}
+          sizes="(max-width: 768px) 100vw, 33vw"
           className={`object-cover ${
             shape === "circle" ? "rounded-full" : "rounded-2xl w-full h-32"
           }`}

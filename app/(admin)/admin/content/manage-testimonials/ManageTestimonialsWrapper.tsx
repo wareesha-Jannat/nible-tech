@@ -3,7 +3,7 @@ import { getTestimonials } from "./data";
 import ManageTestimonials from "./ManageTestimonials";
 
 const ManageTestimonialsWrapper = async () => {
-  const result = await getTestimonials({});
+  const result = await getTestimonials();
 
   return (
     <>
@@ -13,9 +13,7 @@ const ManageTestimonialsWrapper = async () => {
           Failed to load Testimonials
         </div>
       ) : (
-        <ManageTestimonials initialTestimonials={result.testimonials}
-          cursor={result.nextCursor}
-          featureCount={result.featureCount} />
+        <ManageTestimonials initialTestimonials={result.testimonials} />
       )}
     </>
   );

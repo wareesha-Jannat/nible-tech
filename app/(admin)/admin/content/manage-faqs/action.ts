@@ -7,6 +7,7 @@ import { faqSchema, FAQFormType } from "@/lib/validations/faq";
 import { FaqItem } from "@/lib/types";
 import { Faq } from "@/models/FAQ";
 import { auth } from "@/lib/auth";
+import { revalidatePath } from "next/cache";
 
 /* ----------------------------- ADD FAQ ----------------------------- */
 
@@ -51,6 +52,8 @@ export async function addFaq(data: FAQFormType): Promise<AddFaqResponse> {
 
     const faq = await Faq.create(parsed.data);
     const plain = faq.toObject();
+
+    await revalidatePath("/admin/content");
 
     return {
       success: true,
@@ -120,7 +123,7 @@ export async function updateFaq(
         message: "FAQ not found",
       };
     }
-
+    await revalidatePath("/admin/content");
     return {
       success: true,
       message: "FAQ updated successfully",
@@ -175,7 +178,7 @@ export async function deleteFaqDB(id: string): Promise<DeleteFaqResponse> {
         message: "FAQ not found",
       };
     }
-
+    await revalidatePath("/admin/content");
     return {
       success: true,
       message: "FAQ deleted successfully",
@@ -190,7 +193,7 @@ export async function deleteFaqDB(id: string): Promise<DeleteFaqResponse> {
     };
   }
 }
-type UpdatePriorityResponse = 
+type UpdatePriorityResponse =
   | {
       success: true;
       updated: FaqItem;
@@ -200,7 +203,10 @@ type UpdatePriorityResponse =
       message: string;
     };
 
-export async function updateFaqPriority(id: string, priority: number) : Promise<UpdatePriorityResponse> {
+export async function updateFaqPriority(
+  id: string,
+  priority: number,
+): Promise<UpdatePriorityResponse> {
   try {
     const session = await auth();
 
@@ -251,6 +257,7 @@ export async function updateFaqPriority(id: string, priority: number) : Promise<
         message: "Service not found",
       };
     }
+    await revalidatePath("/admin/content");
 
     return {
       success: true,

@@ -1,12 +1,12 @@
-import { Service } from "@/models/Service"; // adjust path
-import { serializeData } from "@/lib/utils"; // if you already use this
 import { connectDB } from "@/lib/db";
+import { serializeData } from "@/lib/utils";
+import Service from "@/models/Service";
 
 export type ServicePreview = {
   _id: string;
   title: string;
-  description: string;
-  category: string;
+  shortDescription: string;
+  features: string[];
 };
 
 type ServicesResponse = {
@@ -15,23 +15,32 @@ type ServicesResponse = {
   data: ServicePreview[];
 };
 
-export async function getFeaturedServices(): Promise<ServicesResponse> {
+type Feature = { title: string; description: string };
+
+export async function getServices(): Promise<ServicesResponse> {
   try {
     await connectDB();
-    const services = await Service.find({ featured: true })
-      .select("title description category") // only needed fields
-      .sort({ priority: 1 }) // latest first (optional)
-      .limit(3)
+
+    const services = await Service.find({ order: 1 })
+      .select("title shortDescription features ")
+      .sort({ order: 1 })
       .lean();
 
-    const result = serializeData(services) as ServicePreview[];
+    const mappedServices = services.map((service) => ({
+      _id: service._id,
+      title: service.title,
+      shortDescription: service.shortDescription,
+      features: service.features?.map((f: Feature) => f.title) || [],
+    }));
+    const result = serializeData(mappedServices) as ServicePreview[];
+
     return {
       success: true,
       message: "Services fetched successfully",
       data: result,
     };
   } catch (error) {
-    console.error("Error fetching featured services:", error);
+    console.error("Error fetching services:", error);
 
     return {
       success: false,

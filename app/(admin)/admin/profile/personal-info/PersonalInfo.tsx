@@ -155,7 +155,7 @@ const PersonalInfo = ({ user }: PersonalInfoProps) => {
             type="button"
             onClick={handleDeleteImage}
             disabled={!hasImage}
-            className="w-full px-6 py-2 bg-red-600 active:bg-red-700 transition-colors duration-200 text-white rounded-md disabled:opacity-30"
+            className="w-full min-[470px]:w-auto px-6 py-2 bg-red-600 active:bg-red-700 transition-colors duration-200 text-white rounded-md disabled:opacity-30"
           >
             Remove Image
           </button>
@@ -163,12 +163,12 @@ const PersonalInfo = ({ user }: PersonalInfoProps) => {
           <button
             onClick={handleSave}
             disabled={!isChanged || isSaving}
-            className="w-full px-6 py-2 bg-primary-dark active:bg-primary-dark transition-colors duration-200 text-white rounded-md disabled:opacity-30 flex items-center justify-center gap-2 whitespace-nowrap"
+            className="w-full min-[470px]:w-auto px-6 py-2 bg-primary-dark active:bg-primary-dark transition-colors duration-200 text-white rounded-md disabled:opacity-30 flex items-center justify-center gap-2 whitespace-nowrap"
           >
             {isSaving ? (
               <>
                 <Loader2 className="w-4 h-4 animate-spin" />
-                <span>Saving...</span>
+                <span>Save</span>
               </>
             ) : (
               <span>Save</span>

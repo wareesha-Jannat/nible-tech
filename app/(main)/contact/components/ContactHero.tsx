@@ -35,7 +35,7 @@ const ContactHero = () => {
 
         <div className="flex flex-col sm:flex-row gap-5 w-full sm:w-auto">
           <Link
-            href="#contact-form"
+            href="#start-project"
             className="inline-flex items-center justify-center px-8 py-4 rounded-xl font-semibold text-white bg-primary hover:bg-primary-dark transition-all duration-300 shadow-lg hover:shadow-xl hover:-translate-y-1 active:scale-95 text-lg"
           >
             Start a Project

@@ -1,46 +1,79 @@
 "use client";
 
-import { Briefcase, Grid, Home, Info } from "lucide-react";
+import {  ChevronDown } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import React, { useState } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useSession } from "next-auth/react";
+import { useServices } from "@/hooks/useServices";
+import { groupServicesByCategory } from "@/lib/utils";
 
 const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const { data: session } = useSession();
+  const [openDropdown, setOpenDropdown] = useState<string | null>(null);
+  const navRef = useRef<HTMLDivElement | null>(null);
 
-  // Safe fallback if usePathname is not ready
+  const { data: services = []} = useServices();
+
+  const groupedServices = groupServicesByCategory(services ?? []);
+
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (navRef.current && !navRef.current.contains(e.target as Node)) {
+        setOpenDropdown(null);
+        setIsMenuOpen(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  const { data: session } = useSession();
   const pathname = usePathname() || "/";
 
   const navLinks = [
     {
       name: "Home",
       path: "/",
-      icon: <Home className="w-5 h-5 mr-1.5" />, // replace svg with Lucide icon
     },
     {
       name: "About",
       path: "/about",
-      icon: <Info className="w-5 h-5 mr-1.5" />,
     },
     {
-      name: "Services",
-      path: "/services",
-      icon: <Briefcase className="w-5 h-5 mr-1.5" />,
+      name: "SEO",
+      path: "/services/seo",
+      dropdown: groupedServices.seo,
+    },
+    {
+      name: "Web",
+      path: "/services/web",
+      dropdown: groupedServices.web,
+    },
+    {
+      name: "Marketing",
+      path: "/services/marketing",
+      dropdown: groupedServices.marketing,
     },
     {
       name: "Portfolio",
       path: "/portfolio",
-      icon: <Grid className="w-5 h-5 mr-1.5" />,
+    },
+    {
+      name: "Blogs",
+      path: "/blogs",
     },
   ];
 
   return (
-    <header className="relative w-full z-50 bg-transparent py-4 border-b border-border text-primary">
-      <div className="flex justify-between items-center px-10 md:px-16 mx-auto w-full max-w-[1280px]">
-        {/* Logo Section */}
+    <header className="relative w-full z-50 bg-transparent py-2 border-b border-border text-primary">
+      <div
+        ref={navRef}
+        className=" flex items-center justify-between px-10 md:px-16 mx-auto w-full max-w-[1280px]"
+      >
+        {/* Logo */}
         <Link
           href="/"
           className="flex items-center space-x-2 z-50 relative group"
@@ -53,139 +86,155 @@ const Header = () => {
             priority
             className="w-[65px] h-[65px] object-contain transition-transform group-hover:scale-105"
           />
-          <span className="flex items-center justify-center font-bold text-xl tracking-wide">
+          <span className="flex items-center font-bold text-xl tracking-wide">
             <span>Nible</span>
             <span className="text-primary-light ml-1">Tech</span>
           </span>
         </Link>
 
-        {/* Desktop Navigation */}
-        <nav className="hidden lg:flex items-center space-x-4">
-          <ul className="flex items-center space-x-8 text-sm font-medium">
-            {navLinks.map((link) => {
-              const isActive = pathname === link.path;
-              return (
-                <li key={link.name}>
-                  <Link
-                    href={link.path}
-                    className={`group relative flex items-center py-2 transition-colors duration-300 font-semibold hover:text-primary-dark ${isActive ? "text-primary-dark" : "text-primary"}`}
-                  >
-                    {link.icon}
-                    {link.name}
-                    <span
-                      className={`absolute bottom-0 left-0 w-full h-[2px] bg-primary origin-left transition-transform duration-300 ${isActive ? "scale-x-100" : "scale-x-0 group-hover:scale-x-100"}`}
-                    />
-                  </Link>
-                </li>
-              );
-            })}
-          </ul>
-
-          {/* Action Buttons */}
-          <div className="flex items-center gap-4">
-            {/* Login Button */}
-            {session ? (
-              <Link
-                href="admin/dashboard"
-                className="bg-primary text-center hover:bg-primary-dark hover:-translate-y-0.5 transition-all duration-300 py-2.5 px-6 rounded-lg font-semibold shadow-md active:scale-95 text-white"
-              >
-                Dashboard
-              </Link>
-            ) : (
-              <Link
-                href="/login"
-                className="border border-primary text-primary hover:bg-primary hover:text-white hover:-translate-y-0.5 transition-all duration-300 py-2.5 px-6 rounded-lg font-semibold active:scale-95"
-              >
-                Login
-              </Link>
-            )}
-
-            {/* Contact Button */}
-            <Link
-              href="/contact"
-              className="bg-primary hover:bg-primary-dark hover:-translate-y-0.5 transition-all duration-300 py-2.5 px-6 rounded-lg font-semibold shadow-md active:scale-95 text-white"
-            >
-              Contact Us
-            </Link>
-          </div>
-        </nav>
-
-        {/* Mobile Hamburger Toggle Button */}
+        {/* Hamburger */}
         <button
-          className="lg:hidden z-50 p-2 focus:outline-none"
+          className="min-[1230px]:hidden ml-auto z-50 p-2"
           onClick={() => setIsMenuOpen(!isMenuOpen)}
-          aria-label={
-            isMenuOpen ? "Close Navigation Menu" : "Open Navigation Menu"
-          }
-          aria-expanded={isMenuOpen}
         >
-          <div className="w-6 flex flex-col items-end gap-1.5 relative">
+          <div className="w-6 flex flex-col items-end gap-1.5">
             <span
-              className={`block h-[2px] w-full bg-primary rounded-lg transition-transform duration-300 ease-in-out origin-right ${isMenuOpen ? "-rotate-45 -translate-y-[1px]" : ""}`}
+              className={`h-[2px] w-full bg-primary transition ${
+                isMenuOpen ? "-rotate-45 -translate-y-[1px]" : ""
+              }`}
             />
             <span
-              className={`block h-[2px] bg-primary rounded-lg transition-all duration-200 ease-in-out ${isMenuOpen ? "w-0 opacity-0" : "w-full opacity-100"}`}
+              className={`h-[2px] bg-primary transition ${
+                isMenuOpen ? "w-0 opacity-0" : "w-full"
+              }`}
             />
             <span
-              className={`block h-[2px] w-full bg-primary rounded-lg transition-transform duration-300 ease-in-out origin-right ${isMenuOpen ? "rotate-45 translate-y-[1px]" : ""}`}
+              className={`h-[2px] w-full bg-primary transition ${
+                isMenuOpen ? "rotate-45 translate-y-[1px]" : ""
+              }`}
             />
           </div>
         </button>
-      </div>
 
-      {/* Mobile Navigation Dropdown */}
-      <div
-        className={`lg:hidden absolute top-full left-0 w-full overflow-hidden transition-all duration-500 ease-in-out bg-white border-b border-gray-200 shadow-2xl ${
-          isMenuOpen
-            ? "max-h-screen opacity-100 py-6"
-            : "max-h-0 opacity-0 py-0 border-none"
-        }`}
-      >
-        <ul className="flex flex-col space-y-4 px-6 mb-6">
-          {navLinks.map((link) => {
-            const isActive = pathname === link.path;
-            return (
-              <li key={link.name}>
-                <Link
-                  href={link.path}
-                  onClick={() => setIsMenuOpen(false)}
-                  className={`flex items-center py-3 px-4 rounded-lg text-lg transition-all duration-300
-                    ${isActive ? "bg-primary/10 text-primary-dark font-semibold" : "text-primary hover:bg-primary/5 hover:text-primary-dark font-medium"}
-                  `}
-                >
-                  <span className="mr-1">{link.icon}</span>
-                  {link.name}
-                </Link>
-              </li>
-            );
-          })}
-        </ul>
-
-        <div className="px-6 pb-2 flex flex-col gap-3">
-          {/* Login Button */}
-          {session ? (
-            <Link
-              href="admin/dashboard"
-              className="bg-primary hover:bg-primary-dark text-center hover:-translate-y-0.5 transition-all duration-300 py-2.5 px-6 rounded-lg font-semibold shadow-md active:scale-95 text-white"
-            >
-              Dashboard
-            </Link>
-          ) : (
-            <Link
-              href="/login"
-              className="border border-primary text-primary hover:bg-primary hover:text-white hover:-translate-y-0.5 transition-all duration-300 py-2.5 px-6 rounded-lg font-semibold active:scale-95"
-            >
-              Login
-            </Link>
-          )}
-          {/* Contact Button */}
-          <Link
-            href="/contact"
-            className="w-full text-center bg-primary hover:bg-primary-dark transition-colors duration-300 py-3 rounded-lg font-semibold shadow-lg active:scale-95 text-lg text-white"
+        {/* NAV (Unified) */}
+        <nav className="min-[1230px]:ml-auto ">
+          <div
+            className={`
+              min-[1230px]:flex min-[1230px]:items-center min-[1230px]:space-x-4
+              ${isMenuOpen ? "block  " : "hidden"} min-[1230px]:block
+              absolute min-[1230px]:static top-full left-0 w-full min-[1230px]:w-auto
+              bg-white min-[1230px]:bg-transparent shadow-lg min-[1230px]:shadow-none
+              px-6 min-[1230px]:px-0 py-6 
+            `}
           >
-            Contact Us
-          </Link>
-        </div>
+            {/* Links */}
+            <ul className="flex flex-col min-[1230px]:flex-row min-[1230px]:items-center gap-4 min-[1230px]:gap-6">
+              {navLinks.map((link) => {
+                const isActive =
+                  link.path === "/"
+                    ? pathname === "/"
+                    : pathname.startsWith(link.path);
+                const isOpen = openDropdown === link.name;
+
+                return (
+                  <li key={link.name} className="relative">
+                    {link.dropdown ? (
+                     <button
+  onClick={() => setOpenDropdown(isOpen ? null : link.name)}
+  className={`flex items-center gap-2 py-2 font-semibold ${
+    isActive
+      ? "text-primary-dark"
+      : "text-primary hover:text-primary-dark"
+  }`}
+>
+  <span>{link.name}</span>
+  <ChevronDown
+    className={`w-4 h-4 transition-transform ${
+      isOpen ? "rotate-180" : ""
+    }`}
+  />
+</button>
+                    ) : (
+                      <Link
+                        href={link.path}
+                        onClick={() => setIsMenuOpen(false)}
+                        className={`font-semibold ${
+                          isActive
+                            ? "text-primary-dark"
+                            : "text-primary hover:text-primary-dark"
+                        }`}
+                      >
+                        {link.name}
+                      </Link>
+                    )}
+
+                    {/* Dropdown */}
+                    {link.dropdown && (
+                      <div
+                        className={`
+      ${isOpen ? "block" : "hidden"}
+      min-[1230px]:absolute min-[1230px]:top-full min-[1230px]:left-0 min-[1230px]:mt-2
+      min-[1230px]:w-56 bg-white min-[1230px]:shadow-lg rounded-lg
+    `}
+                      >
+                        <ul className="py-2">
+                          {link.dropdown.length === 0
+                            ? // 🔥 Skeleton UI
+                              Array.from({ length: 3 }).map((_, i) => (
+                                <li key={i} className="px-4 py-2">
+                                  <div className="h-3 w-full bg-gray-200 rounded animate-pulse" />
+                                </li>
+                              ))
+                            : // 🔥 Normal menu
+                              link.dropdown.map((item) => (
+                                <li key={item.name}>
+                                  <Link
+                                    href={item.path}
+                                    onClick={() => {
+                                      setIsMenuOpen(false);
+                                      setOpenDropdown(null);
+                                    }}
+                                    className="block px-4 py-2 text-sm text-primary hover:bg-primary/10"
+                                  >
+                                    {item.name}
+                                  </Link>
+                                </li>
+                              ))}
+                        </ul>
+                      </div>
+                    )}
+                  </li>
+                );
+              })}
+            </ul>
+
+            {/* Buttons (UNCHANGED as requested) */}
+            <div className="flex flex-col min-[1230px]:flex-row gap-3 min-[1230px]:gap-4 mt-6 min-[1230px]:mt-0">
+              {session ? (
+                <Link
+                  href="/admin/dashboard"
+                  className="bg-primary text-center hover:bg-primary-dark hover:-translate-y-0.5 transition-all duration-300 py-2.5 px-6 rounded-lg font-semibold shadow-md active:scale-95 text-white"
+                >
+                  Dashboard
+                </Link>
+              ) : (
+                <Link
+                  href="/login"
+                  className="border border-primary text-primary hover:bg-primary hover:text-white hover:-translate-y-0.5 transition-all duration-300 py-2.5 px-6 rounded-lg font-semibold active:scale-95 text-center"
+                >
+                  Login
+                </Link>
+              )}
+
+              <Link
+                href="/contact"
+                className="bg-primary hover:bg-primary-dark hover:-translate-y-0.5 transition-all duration-300 py-2.5 px-6 rounded-lg font-semibold shadow-md active:scale-95 text-white text-center"
+              >
+                Contact Us
+              </Link>
+            </div>
+          </div>
+        </nav>
       </div>
     </header>
   );

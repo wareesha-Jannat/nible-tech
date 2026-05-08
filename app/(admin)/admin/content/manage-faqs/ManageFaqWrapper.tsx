@@ -3,7 +3,7 @@ import { getFaqs } from './data'
 import ManageFaqs from './ManageFaqs'
 
 const ManageFaqWrapper = async() => {
-    const result = await getFaqs({})
+    const result = await getFaqs()
   return (
     <>
      {!result.success ? (
@@ -14,8 +14,6 @@ const ManageFaqWrapper = async() => {
       ) : (
         <ManageFaqs
           initialFaqs={result.faqs}
-          cursor={result.nextCursor}
-          featureCount={result.featureCount}
         />
       )}
     </>

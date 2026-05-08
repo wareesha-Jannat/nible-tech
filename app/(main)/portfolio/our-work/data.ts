@@ -13,7 +13,7 @@ export async function getFeaturedProjects(): Promise<ProjectsResponse> {
   try {
     await connectDB();
 
-    const projects = await Project.find({ featured: true })
+    const projects = await Project.find()
       .sort({ priority: 1 }) // latest first
       .lean();
 

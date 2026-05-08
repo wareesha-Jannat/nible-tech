@@ -1,12 +1,32 @@
-export type ServiceItem = {
-  _id: string;
+import { Category } from "./serviceDesignConfig";
+
+export type ServiceFeature = {
   title: string;
   description: string;
-  category: string;
-  features: string[];
+};
+
+export type ServiceItem = {
+  _id: string;
+
+  title: string;
+  slug?: string;
+
+  category: Category;
+
+  shortDescription: string;
+  overview: string;
+
+  features: ServiceFeature[];
+
   technologies: string[];
-  featured: boolean;
-  priority?: number;
+
+  order: number;
+
+  metaTitle?: string;
+  metaDescription?: string;
+
+  createdAt?: string;
+  updatedAt?: string;
 };
 
 export type Stats = {
@@ -35,15 +55,29 @@ export type QueriesPage = {
   nextCursor: string;
 };
 
+export type BlogItem = {
+  _id: string;
+
+  title: string;
+  slug?: string;
+
+  excerpt: string;
+
+  content: string;
+
+  coverImage: Image;
+  createdAt?: string;
+  updatedAt?: string;
+};
+
 export type TestimonialItem = {
   _id: string;
   name: string;
   role: string;
   message: string;
   image: Image;
-  featured: boolean;
+  company?: string;
   createdAt?: string;
-  priority?: number;
 };
 export type Image = {
   url: string;
@@ -57,7 +91,7 @@ export type ProjectItem = {
   image: Image;
   features: string[];
   technologies: string[];
-  featured: boolean;
+  demoUrl?: string;
   createdAt?: string;
   priority?: number;
 };
@@ -79,17 +113,11 @@ export type ProjectsPage = {
   nextCursor: string | null;
   featureCount: number;
 };
-export type FaqsPage = {
-  faqs: FaqItem[];
-  nextCursor: string | null;
-  featureCount: number;
-};
 
 export type FaqItem = {
   _id: string;
   question: string;
   answer: string;
-  featured: boolean;
   createdAt?: string;
   priority?: number;
 };

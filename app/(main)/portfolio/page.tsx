@@ -1,9 +1,9 @@
 import React from "react";
 import PortfolioHero from "./components/PortfolioHero";
-import ServicesCtaSection from "./components/PortfolioCtaSection";
+import PortfolioCtaSection from "./components/PortfolioCtaSection";
 import OurWorkSection from "./our-work/OurWorkSection";
-import TestimonialsSection from "./testimonials/TestimonialsSection";
 import type { Metadata } from "next";
+import FAQSection from "./faqs/FAQSection";
 
 export const metadata: Metadata = {
   title: "Portfolio",
@@ -16,8 +16,8 @@ export default function Portfolio() {
     <>
       <PortfolioHero />
       <OurWorkSection />
-      <TestimonialsSection />
-      <ServicesCtaSection />
+      <FAQSection />
+      <PortfolioCtaSection />
     </>
   );
 }

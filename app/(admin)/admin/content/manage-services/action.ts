@@ -1,14 +1,17 @@
 "use server";
 
 import { ServiceItem } from "@/lib/types";
-import { serializeData } from "@/lib/utils";
+import { generateSlug, serializeData } from "@/lib/utils";
 import { connectDB } from "@/lib/db";
 import {
   serviceBackendSchema,
   ServiceBackendType,
 } from "@/lib/validations/service";
-import { Service } from "@/models/Service";
+
 import { auth } from "@/lib/auth";
+import Service from "@/models/Service";
+import mongoose from "mongoose";
+import { revalidatePath } from "next/cache";
 
 type AddServiceResponse =
   | {
@@ -49,8 +52,26 @@ export async function addService(
       };
     }
     await connectDB();
-    const res = await Service.create(parsed.data);
+  const slug = generateSlug(parsed.data.title);
+
+    const metaTitle = `${parsed.data.title}`;
+
+    const metaDescription =
+      parsed.data.shortDescription.length > 150
+        ? parsed.data.shortDescription.slice(0, 150) + "..."
+        : parsed.data.shortDescription;
+
+    // ----------------------------
+    // CREATE SERVICE
+    // ----------------------------
+    const res = await Service.create({
+      ...parsed.data,
+      slug,
+      metaTitle,
+      metaDescription,
+    });
     const plain = res.toObject();
+    await revalidatePath("/admin/content");
     return {
       success: true,
       message: "Service added successfully",
@@ -103,12 +124,59 @@ export async function updateService(
         message: "Invalid service data",
       };
     }
-
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return {
+        success: false,
+        message: "Invalid service ID",
+      };
+    }
     await connectDB();
+    const existing = await Service.findById(id);
 
-    const updatedService = await Service.findByIdAndUpdate(id, parsed.data, {
-      returnDocument: "after",
-    }).lean();
+    if (!existing) {
+      return {
+        success: false,
+        message: "Service not found",
+      };
+    }
+
+    const titleChanged = existing.title !== parsed.data.title;
+
+    const descriptionChanged =
+      existing.shortDescription !== parsed.data.shortDescription;
+
+    // --------------------
+    // start with existing values
+    // --------------------
+    let slug = existing.slug;
+    let metaTitle = existing.metaTitle;
+    let metaDescription = existing.metaDescription;
+
+    // --------------------
+    // update only if needed
+    // --------------------
+    if (titleChanged) {
+      slug = generateSlug(parsed.data.title);
+      metaTitle = parsed.data.title;
+    }
+
+    if (descriptionChanged) {
+      metaDescription =
+        parsed.data.shortDescription.length > 150
+          ? parsed.data.shortDescription.slice(0, 150) + "..."
+          : parsed.data.shortDescription;
+    }
+
+    const updatedService = await Service.findByIdAndUpdate(
+      id,
+      {
+        ...parsed.data,
+        slug,
+        metaTitle,
+        metaDescription,
+      },
+      { returnDocument: "after" },
+    ).lean();
 
     if (!updatedService) {
       return {
@@ -116,7 +184,7 @@ export async function updateService(
         message: "Service not found",
       };
     }
-
+    await revalidatePath("/admin/content");
     return {
       success: true,
       message: "Service updated successfully",
@@ -161,6 +229,12 @@ export async function deleteServiceDB(
         message: "Forbidden",
       };
     }
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return {
+        success: false,
+        message: "Invalid service ID",
+      };
+    }
     await connectDB();
 
     const deleted = await Service.findByIdAndDelete(id);
@@ -171,7 +245,7 @@ export async function deleteServiceDB(
         message: "Service not found",
       };
     }
-
+    await revalidatePath("/admin/content");
     return {
       success: true,
       message: "Service deleted successfully",
@@ -197,9 +271,9 @@ type UpdatePriorityResponse =
       message: string;
     };
 
-export async function updateServicePriority(
+export async function updateServiceOrder(
   id: string,
-  priority: number,
+  order: number,
 ): Promise<UpdatePriorityResponse> {
   try {
     const session = await auth();
@@ -222,8 +296,14 @@ export async function updateServicePriority(
         message: "Service ID is required",
       };
     }
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return {
+        success: false,
+        message: "Invalid service ID",
+      };
+    }
 
-    const parsedPriority = Number(priority);
+    const parsedPriority = Number(order);
 
     if (isNaN(parsedPriority)) {
       return {
@@ -238,10 +318,10 @@ export async function updateServicePriority(
         message: "Priority cannot be negative",
       };
     }
-
+    await connectDB();
     const updatedDoc = await Service.findByIdAndUpdate(
       id,
-      { priority: parsedPriority },
+      { order: parsedPriority },
       { new: true },
     ).lean();
 
@@ -251,7 +331,7 @@ export async function updateServicePriority(
         message: "Service not found",
       };
     }
-
+    await revalidatePath("/admin/content");
     return {
       success: true,
       updated: serializeData(updatedDoc) as ServiceItem,
