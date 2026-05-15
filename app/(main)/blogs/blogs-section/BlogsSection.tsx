@@ -16,8 +16,8 @@ const BlogsSection = () => {
               </span>
             </h2>
             <p className="text-gray-600">
-              A selection of projects that showcase how we turn ideas into real,
-              scalable digital products.
+              A collection of thoughts, tutorials, and insights on web
+              development and modern technologies.
             </p>
           </div>
           <Suspense fallback={<BlogsSkeleton />}>

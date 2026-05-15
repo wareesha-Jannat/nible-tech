@@ -31,7 +31,8 @@ export const metadata: Metadata = {
     "software house Pakistan",
     "digital marketing agency",
     "WordPress development",
-    "AI chatbot integration",
+    "SEO Optimization",
+    "content marketing",
     "custom web solutions",
   ],
 
@@ -45,7 +46,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: "Nible Tech - Modern IT Solutions Company",
     description:
-      "Professional IT services including web development,  digital marketing, and custom software solutions.",
+      "Professional IT services including web development, SEO optimization, digital marketing, and custom software solutions.",
     url: "https://nibletech.com",
     siteName: "Nible Tech",
     type: "website",
@@ -74,6 +75,12 @@ export default async function RootLayout({
 
   return (
     <html lang="en" className={`${poppins.variable} antialiased`}>
+      <head>
+        <meta
+          name="google-site-verification"
+          content="R5X5PmykMj01Dqq4BRi4g1K2AlNyOINgqa-XYS70dTo"
+        />
+      </head>
       <body>
         <ReactQueryProvider>
           <SessionWrapper session={session}>

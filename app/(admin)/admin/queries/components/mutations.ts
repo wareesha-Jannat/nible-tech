@@ -116,7 +116,6 @@ export function useDeleteQueryMutation() {
     },
 
     onSuccess: async (deletedId) => {
-      toast.success("Query deleted");
 
       await queryClient.cancelQueries({ queryKey: ["queries"] });
 
