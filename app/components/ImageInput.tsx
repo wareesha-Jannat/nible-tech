@@ -10,7 +10,7 @@ type ImageInputProps = {
   aspectRatio?: number;
   shape?: "circle" | "rect";
   previewSize?: number;
-  onImageCropped: (file: File) => void; // 🔥 fixed
+  onImageCropped: (file: File) => void; 
 };
 
 const ImageInput: React.FC<ImageInputProps> = ({
