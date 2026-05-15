@@ -203,7 +203,7 @@ export default function ManageServices({
       </div>
 
       {/* LIST */}
-      <div className="p-4 sm:p-6 bg-white rounded-2xl border-border">
+      <div className="p-3 sm:p-5 bg-white rounded-2xl border-border">
         {filteredServices.map((service, index) => (
           <details key={service._id} className="border-b py-4">
             <summary className="flex flex-wrap gap-3 px-4 sm:px-6 py-4 cursor-pointer">
@@ -211,7 +211,7 @@ export default function ManageServices({
                 <span>{index + 1}.</span>
                 <h3 className="font-semibold">{service.title}</h3>
               </div>
-       
+
               <div className="flex items-center ml-auto gap-2">
                 <button
                   onClick={(e) => {
@@ -236,7 +236,7 @@ export default function ManageServices({
                     "Delete"
                   )}
                 </button>
-                 <ChevronDown className="transition-transform duration-200 group-open:rotate-180" />
+                <ChevronDown className="transition-transform duration-200 group-open:rotate-180" />
               </div>
             </summary>
 
