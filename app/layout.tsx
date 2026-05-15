@@ -35,6 +35,9 @@ export const metadata: Metadata = {
     "content marketing",
     "custom web solutions",
   ],
+  verification: {
+    google: "R5X5PmykMj01Dqq4BRi4g1K2AlNyOINgqa-XYS70dTo",
+  },
 
   authors: [
     {
