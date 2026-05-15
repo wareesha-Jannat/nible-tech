@@ -35,9 +35,6 @@ export const metadata: Metadata = {
     "content marketing",
     "custom web solutions",
   ],
-  verification: {
-    google: "R5X5PmykMj01Dqq4BRi4g1K2AlNyOINgqa-XYS70dTo",
-  },
 
   authors: [
     {
@@ -78,12 +75,6 @@ export default async function RootLayout({
 
   return (
     <html lang="en" className={`${poppins.variable} antialiased`}>
-      <head>
-        <meta
-          name="google-site-verification"
-          content="R5X5PmykMj01Dqq4BRi4g1K2AlNyOINgqa-XYS70dTo"
-        />
-      </head>
       <body>
         <ReactQueryProvider>
           <SessionWrapper session={session}>
