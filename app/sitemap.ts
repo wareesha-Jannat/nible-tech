@@ -11,7 +11,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
       lastModified: new Date(),
     },
     {
-      url: "https://nibletech.com/services",
+      url: "https://nibletech.com/blogs",
       lastModified: new Date(),
     },
     {

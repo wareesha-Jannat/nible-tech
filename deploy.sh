@@ -10,6 +10,6 @@ npm install
 
 npm run build
 
-pm2 restart next-app
+pm2 reload next-app
 
 echo "✅ Deployment completed"
