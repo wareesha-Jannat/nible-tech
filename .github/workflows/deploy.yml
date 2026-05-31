@@ -21,4 +21,4 @@ jobs:
             git pull origin main
             npm install
             npm run build
-            pm2 reload nextapp
+            pm2 reload ecosystem.config.js --update-env
